@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Copperline - A cycle-driven Amiga emulator</title>
+<meta name="description" content="Copperline is a cycle-driven Amiga emulator (OCS / ECS / AGA) written in Rust. It models the hardware - chip bus, Copper, blitter, Paula, CIA - per colour clock, and runs timing-sensitive demos and games at real speed.">
+<meta name="theme-color" content="#0a0d16">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Copperline - A cycle-driven Amiga emulator">
+<meta property="og:description" content="A cycle-driven Amiga emulator (OCS / ECS / AGA) in Rust. Hardware modelled per colour clock; demos and games at real speed.">
+<meta property="og:url" content="https://copperline.dev/">
+<meta property="og:image" content="https://copperline.dev/assets/shot-aga.png">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="scanlines" aria-hidden="true"></div>
+
+<header class="nav">
+  <a class="nav__brand" href="#top">
+    <img src="assets/copperline-icon.png" alt="" width="34" height="34">
+    <span>Copperline</span>
+  </a>
+  <nav class="nav__links">
+    <a href="#features">Features</a>
+    <a href="#shots">Screenshots</a>
+    <a href="#hardware">Hardware</a>
+    <a href="#download">Download</a>
+    <a class="nav__gh" href="https://github.com/LinuxJedi/Copperline" target="_blank" rel="noopener">GitHub</a>
+  </nav>
+</header>
+
+<main id="top">
+
+  <!-- ===================== HERO ===================== -->
+  <section class="hero">
+    <div class="hero__bars" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="hero__glow" aria-hidden="true"></div>
+
+    <div class="hero__inner">
+      <p class="eyebrow reveal">Cycle-driven &middot; OCS / ECS / AGA &middot; written in Rust</p>
+      <h1 class="hero__logo reveal" style="--d:1">
+        <img src="assets/copperline-logo.png" alt="Copperline">
+      </h1>
+      <p class="hero__tag reveal" style="--d:2">
+        An Amiga emulator that models the <strong>hardware</strong>, not individual titles.
+        The chip bus is arbitrated per colour clock; the Copper and blitter are scheduled
+        per DMA slot; 68000 interrupt latency is modelled. Timing-sensitive demos and games
+        run at real speed.
+      </p>
+      <div class="hero__cta reveal" style="--d:3">
+        <a class="btn btn--primary" href="#download">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 3v10.5l3.3-3.3 1.4 1.4L12 17l-4.7-5.4 1.4-1.4L12 13.5V3h0zM5 19h14v2H5z"/></svg>
+          Download
+        </a>
+        <a class="btn btn--ghost" href="https://github.com/LinuxJedi/Copperline" target="_blank" rel="noopener">
+          View source
+        </a>
+      </div>
+      <ul class="hero__chips reveal" style="--d:4" aria-label="Supported hardware">
+        <li>68000 - 68040</li><li>OCS</li><li>ECS</li><li>AGA</li>
+        <li>A500 - A1200</li><li>CDTV</li><li>CD32</li><li>HAM8</li>
+      </ul>
+    </div>
+  </section>
+
+  <hr class="copperline">
+
+  <!-- ===================== FEATURES ===================== -->
+  <section id="features" class="section">
+    <div class="section__head">
+      <span class="kicker">// features</span>
+      <h2>Modelled, not faked</h2>
+      <p>Compatibility problems are fixed by modelling the 68000, Agnus, Denise, Paula, CIA,
+         floppy and timing - never by branching on a title's name.</p>
+    </div>
+
+    <div class="grid">
+      <article class="card">
+        <span class="card__tag">timing core</span>
+        <h3>Cycle-driven chip bus</h3>
+        <p>The chip bus is arbitrated per colour clock between refresh, display, sprite,
+           disk and audio DMA, the Copper, the blitter and the CPU - with hardware
+           per-word bus sequences and modelled 68000 interrupt-recognition latency.</p>
+      </article>
+
+      <article class="card">
+        <span class="card__tag">chipsets</span>
+        <h3>OCS, ECS &amp; AGA</h3>
+        <p>Independent Agnus / Denise revisions and machine profiles from the A500 to the
+           A1200, plus CDTV and CD32. Boots Kickstart 1.3 / 2.05 / 3.1 and DiagROM, and
+           runs the timing-sensitive regression set at real speed.</p>
+      </article>
+
+      <article class="card">
+        <span class="card__tag">cpu</span>
+        <h3>68000 through 68040</h3>
+        <p>Selectable 68000 / 68EC020 / 68020 / 68030 / 68040 and clock, accurate 68000
+           cycle counts, optional on-chip caches, and a 68881 / 68882 FPU (default-on for
+           the 040).</p>
+      </article>
+
+      <article class="card">
+        <span class="card__tag">peripherals</span>
+        <h3>Real I/O paths</h3>
+        <p>A bit-timed keyboard (6500/1 MCU), mouse, USB gamepad (pure-Rust gilrs, no
+           SDL2), 4-channel Paula audio, floppy (ADF / ADZ / DMS / SCP), Gayle IDE, A2091
+           SCSI, and CDTV / CD32 CD.</p>
+      </article>
+
+      <article class="card">
+        <span class="card__tag">graphics</span>
+        <h3>The full AGA path</h3>
+        <p>8 bitplanes, a 256-entry 25-bit palette, HAM8, FMODE wide fetch, dual playfield,
+           EHB, sprites and hardware collisions - replayed by beam position so the renderer
+           never races the chipset.</p>
+      </article>
+
+      <article class="card">
+        <span class="card__tag">tooling</span>
+        <h3>Deterministic by design</h3>
+        <p>An in-window debugger, deterministic save states, input recording / replay, and
+           headless screenshot &amp; frame-dump capture. Every replay is byte-identical.</p>
+      </article>
+    </div>
+  </section>
+
+  <hr class="copperline">
+
+  <!-- ===================== SCREENSHOTS ===================== -->
+  <section id="shots" class="section">
+    <div class="section__head">
+      <span class="kicker">// screenshots</span>
+      <h2>See it run</h2>
+      <p>Real captures from the emulator window - chrome, status bar and all.</p>
+    </div>
+
+    <figure class="shot shot--feature">
+      <img src="assets/shot-aga.png" alt="Copperline window showing a 256-colour AGA HAM8 image" loading="lazy">
+      <figcaption><strong>AGA HAM8.</strong> A 262 144-colour image decoded through the full Alice / Lisa display path.</figcaption>
+    </figure>
+
+    <div class="shot-row">
+      <figure class="shot">
+        <img src="assets/shot-desktop.png" alt="Workbench 3.1 desktop running in Copperline" loading="lazy">
+        <figcaption><strong>Workbench 3.1.</strong> Booted from an IDE hard disk on an A1200 profile.</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="assets/shot-dancer.png" alt="Spaceballs State of the Art demo running in Copperline" loading="lazy">
+        <figcaption><strong>State of the Art.</strong> Spaceballs' OCS demo - timing-sensitive, at real speed.</figcaption>
+      </figure>
+    </div>
+
+    <!-- Status bar callout -->
+    <div class="statusbar-callout">
+      <div class="statusbar-callout__text">
+        <span class="kicker">// status bar</span>
+        <h3>Hardware at a glance</h3>
+        <p>The bottom bar mirrors the front panel: power, floppy and hard-disk activity
+           LEDs, a live floppy track counter, disk insert / swap / eject controls, an
+           audio volume slider, and shortcuts for the menu, screenshots, pause and power.</p>
+      </div>
+      <figure class="statusbar-callout__img">
+        <img src="assets/shot-statusbar.png" alt="Close-up of the Copperline status bar showing power, floppy and hard-disk LEDs, track counter, disk controls, volume slider and power buttons" loading="lazy">
+      </figure>
+    </div>
+  </section>
+
+  <hr class="copperline">
+
+  <!-- ===================== HARDWARE ===================== -->
+  <section id="hardware" class="section">
+    <div class="section__head">
+      <span class="kicker">// what gets emulated</span>
+      <h2>The machine, end to end</h2>
+      <p>From the 68000 prefetch queue to Paula's audio mixer - the timing model is
+         documented next to the code and backed by named regression tests.</p>
+    </div>
+
+    <ul class="badges">
+      <li>M68K CPU core</li>
+      <li>Agnus beam counters</li>
+      <li>Copper (per-slot)</li>
+      <li>Blitter (per-slot)</li>
+      <li>Denise / Lisa</li>
+      <li>Paula audio</li>
+      <li>Paula serial</li>
+      <li>CIA-A / CIA-B</li>
+      <li>Chip / fast / slow RAM</li>
+      <li>Battery RTC</li>
+      <li>Floppy DMA</li>
+      <li>Gayle IDE</li>
+      <li>A2091 SCSI</li>
+      <li>Zorro II / III autoconfig</li>
+      <li>OCS sprites</li>
+      <li>HAM6 / HAM8 / EHB</li>
+      <li>Dual playfield</li>
+      <li>CLXDAT collisions</li>
+      <li>DIWHIGH / BEAMCON0</li>
+      <li>SuperHires</li>
+      <li>FMODE wide fetch</li>
+      <li>CD32 / CDTV CD</li>
+    </ul>
+
+    <p class="hardware__note">
+      A vendored pure-Rust <a href="https://github.com/LinuxJedi/Copperline/tree/main/vendor/m68k" target="_blank" rel="noopener">m68k</a>
+      core drives the CPU. The detailed architecture and timing model live in the
+      <a href="https://github.com/LinuxJedi/Copperline/tree/main/docs" target="_blank" rel="noopener">internals docs</a>.
+    </p>
+  </section>
+
+  <hr class="copperline">
+
+  <!-- ===================== DOWNLOAD ===================== -->
+  <section id="download" class="section section--download">
+    <div class="download">
+      <span class="kicker">// download</span>
+      <h2>Get Copperline</h2>
+      <p>Grab the latest release, or build from source with a stable Rust toolchain.
+         Developed and tested on macOS; the Linux and Windows paths are expected to work.</p>
+
+      <a class="btn btn--primary btn--big" href="https://github.com/LinuxJedi/Copperline/releases/latest" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 3v10.5l3.3-3.3 1.4 1.4L12 17l-4.7-5.4 1.4-1.4L12 13.5V3h0zM5 19h14v2H5z"/></svg>
+        Download the latest release
+      </a>
+
+      <div class="codeblock" role="group" aria-label="Build from source">
+        <div class="codeblock__bar"><span></span><span></span><span></span> build from source</div>
+        <pre><code><span class="c-comment"># clone and build (release - debug is too slow for real-time)</span>
+git clone https://github.com/LinuxJedi/Copperline.git
+cd Copperline
+cargo build <span class="c-flag">--release</span>
+
+<span class="c-comment"># run with a Kickstart ROM, or a config file</span>
+./target/release/copperline path/to/kickstart.rom
+./target/release/copperline <span class="c-flag">--config</span> copperline.toml</code></pre>
+      </div>
+      <p class="download__req">Requires Rust 1.87+ (stable). No SDL2 dependency.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="footer__inner">
+    <img src="assets/copperline-icon.png" alt="" width="40" height="40" class="footer__icon">
+    <div class="footer__cols">
+      <p class="footer__lic">
+        Copperline is free software under the
+        <a href="https://github.com/LinuxJedi/Copperline/blob/main/LICENSE" target="_blank" rel="noopener">GNU GPL v3</a>.
+        The vendored m68k core retains its own MIT license.
+      </p>
+      <p class="footer__tm">
+        Amiga and Commodore are trademarks of their respective owners. Copperline is an
+        independent, unofficial project and is not affiliated with, sponsored by, or
+        endorsed by any trademark holder.
+      </p>
+    </div>
+    <nav class="footer__links">
+      <a href="https://github.com/LinuxJedi/Copperline" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/LinuxJedi/Copperline/releases/latest" target="_blank" rel="noopener">Releases</a>
+      <a href="https://github.com/LinuxJedi/Copperline/tree/main/docs" target="_blank" rel="noopener">Docs</a>
+    </nav>
+  </div>
+</footer>
+
+</body>
+</html>
