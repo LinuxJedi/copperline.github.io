@@ -239,6 +239,16 @@
         Download the latest release
       </a>
 
+      <div class="codeblock" role="group" aria-label="Install with Homebrew">
+        <div class="codeblock__bar"><span></span><span></span><span></span> install with homebrew</div>
+        <pre><code><span class="c-comment"># tap the repository and install the latest release</span>
+brew tap LinuxJedi/copperline https://github.com/LinuxJedi/Copperline
+brew install copperline
+
+<span class="c-comment"># or build the latest development version from main</span>
+brew install <span class="c-flag">--HEAD</span> copperline</code></pre>
+      </div>
+
       <div class="codeblock" role="group" aria-label="Build from source">
         <div class="codeblock__bar"><span></span><span></span><span></span> build from source</div>
         <pre><code><span class="c-comment"># clone and build (release - debug is too slow for real-time)</span>
