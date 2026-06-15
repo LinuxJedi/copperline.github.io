@@ -232,7 +232,7 @@
       <span class="kicker">// download</span>
       <h2>Get Copperline</h2>
       <p>Grab the latest release, or build from source with a stable Rust toolchain.
-         Developed and tested on macOS, with a Linux AppImage available; Windows is coming soon.</p>
+         Developed and tested on macOS, with a Linux AppImage and a Windows build available.</p>
 
       <a class="btn btn--primary btn--big" href="https://github.com/LinuxJedi/Copperline/releases/latest" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 3v10.5l3.3-3.3 1.4 1.4L12 17l-4.7-5.4 1.4-1.4L12 13.5V3h0zM5 19h14v2H5z"/></svg>
@@ -271,11 +271,11 @@ brew install <span class="c-flag">--HEAD</span> copperline</code></pre>
           <div class="codeblock" role="group" aria-label="Run the Linux AppImage">
             <div class="codeblock__bar"><span></span><span></span><span></span> run the appimage</div>
             <pre><code><span class="c-comment"># grab the .AppImage from the latest release, then make it executable</span>
-chmod +x Copperline-x86_64.AppImage
+chmod +x Copperline-0.2.0-x86_64.AppImage
 
 <span class="c-comment"># run with a Kickstart ROM, or a config file</span>
-./Copperline-x86_64.AppImage path/to/kickstart.rom
-./Copperline-x86_64.AppImage <span class="c-flag">--config</span> copperline.toml</code></pre>
+./Copperline-0.2.0-x86_64.AppImage path/to/kickstart.rom
+./Copperline-0.2.0-x86_64.AppImage <span class="c-flag">--config</span> copperline.toml</code></pre>
           </div>
 
           <div class="codeblock" role="group" aria-label="Install with Homebrew on Linux">
@@ -290,10 +290,11 @@ brew install <span class="c-flag">--HEAD</span> copperline</code></pre>
         </div>
 
         <div class="tab-panel" id="panel-windows" role="tabpanel" aria-labelledby="tab-windows" hidden>
-          <div class="codeblock" role="group" aria-label="Windows availability">
-            <div class="codeblock__bar"><span></span><span></span><span></span> windows</div>
-            <pre><code><span class="c-comment"># prebuilt Windows binaries are coming soon</span>
-<span class="c-comment"># in the meantime, build from source with the steps below</span></code></pre>
+          <div class="codeblock" role="group" aria-label="Run the Windows build">
+            <div class="codeblock__bar"><span></span><span></span><span></span> run the windows build</div>
+            <pre><code><span class="c-comment"># download and extract Copperline-0.2.0-win-x64.zip, then from a terminal</span>
+copperline.exe path\to\kickstart.rom
+copperline.exe <span class="c-flag">--config</span> copperline.toml</code></pre>
           </div>
         </div>
       </div>
