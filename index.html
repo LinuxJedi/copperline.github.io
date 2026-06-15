@@ -232,21 +232,70 @@
       <span class="kicker">// download</span>
       <h2>Get Copperline</h2>
       <p>Grab the latest release, or build from source with a stable Rust toolchain.
-         Developed and tested on macOS; the Linux and Windows coming soon.</p>
+         Developed and tested on macOS, with a Linux AppImage available; Windows is coming soon.</p>
 
       <a class="btn btn--primary btn--big" href="https://github.com/LinuxJedi/Copperline/releases/latest" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 3v10.5l3.3-3.3 1.4 1.4L12 17l-4.7-5.4 1.4-1.4L12 13.5V3h0zM5 19h14v2H5z"/></svg>
         Download the latest release
       </a>
 
-      <div class="codeblock" role="group" aria-label="Install with Homebrew">
-        <div class="codeblock__bar"><span></span><span></span><span></span> install with homebrew</div>
-        <pre><code><span class="c-comment"># tap the repository and install the latest release</span>
+      <div class="tabs">
+        <div class="tabs__list" role="tablist" aria-label="Choose your platform">
+          <button class="tab" id="tab-macos" role="tab" aria-selected="true" aria-controls="panel-macos" data-os="macos">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M16.36 12.6c-.02-2.06 1.68-3.05 1.76-3.1-0.96-1.4-2.45-1.6-2.98-1.62-1.27-.13-2.48.75-3.12.75-.64 0-1.64-.73-2.7-.71-1.39.02-2.67.81-3.38 2.05-1.44 2.5-.37 6.2 1.04 8.23.69.99 1.51 2.1 2.59 2.06 1.04-.04 1.43-.67 2.69-.67 1.25 0 1.61.67 2.71.65 1.12-.02 1.83-1.01 2.51-2.01.79-1.15 1.12-2.27 1.14-2.33-.03-.01-2.18-.84-2.2-3.3zM14.3 6.54c.57-.69.95-1.65.85-2.6-.82.03-1.81.54-2.4 1.23-.53.61-.99 1.59-.87 2.52.91.07 1.85-.46 2.42-1.15z"/></svg>
+            macOS
+          </button>
+          <button class="tab" id="tab-linux" role="tab" aria-selected="false" aria-controls="panel-linux" data-os="linux" tabindex="-1">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 2c-1.7 0-3 1.6-3 3.6 0 .9.1 1.5-.4 2.5-.5 1-1.7 2.3-2.3 4.3-.3 1-.2 1.9-.5 2.5-.3.6-.9 1-1.2 1.7-.1.4 0 .8.4.9.7.3 1.7.5 2.4 1.1.6.5.9 1.2 1.6 1.5.3.1.7.2 1 .1.6-.1 1-.6 1.5-.9.5 0 1.1 0 1.6 0 .5.3.9.8 1.5.9.3.1.7 0 1-.1.7-.3 1-1 1.6-1.5.7-.6 1.7-.8 2.4-1.1.4-.1.5-.5.4-.9-.3-.7-.9-1.1-1.2-1.7-.3-.6-.2-1.5-.5-2.5-.6-2-1.8-3.3-2.3-4.3-.5-1-.4-1.6-.4-2.5C15 3.6 13.7 2 12 2zm-1.4 4.3c.4 0 .7.4.7.9s-.3.9-.7.9-.7-.4-.7-.9.3-.9.7-.9zm2.8 0c.4 0 .7.4.7.9s-.3.9-.7.9-.7-.4-.7-.9.3-.9.7-.9zM12 9.2c.7 0 1.6.4 1.6.8 0 .3-.4.5-.8.7-.3.2-.6.5-.8.5s-.5-.3-.8-.5c-.4-.2-.8-.4-.8-.7 0-.4.9-.8 1.4-.8z"/></svg>
+            Linux
+          </button>
+          <button class="tab" id="tab-windows" role="tab" aria-selected="false" aria-controls="panel-windows" data-os="windows" tabindex="-1">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M3 5.4l7.5-1v7.1H3V5.4zm0 13.2l7.5 1v-7H3v6zM11.3 4.3L21 3v8.5h-9.7V4.3zm0 8.2H21V21l-9.7-1.3v-7.2z"/></svg>
+            Windows
+          </button>
+        </div>
+
+        <div class="tab-panel" id="panel-macos" role="tabpanel" aria-labelledby="tab-macos">
+          <div class="codeblock" role="group" aria-label="Install with Homebrew">
+            <div class="codeblock__bar"><span></span><span></span><span></span> install with homebrew</div>
+            <pre><code><span class="c-comment"># tap the repository and install the latest release</span>
 brew tap LinuxJedi/copperline https://github.com/LinuxJedi/Copperline
 brew install copperline
 
 <span class="c-comment"># or build the latest development version from main</span>
 brew install <span class="c-flag">--HEAD</span> copperline</code></pre>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="panel-linux" role="tabpanel" aria-labelledby="tab-linux" hidden>
+          <div class="codeblock" role="group" aria-label="Run the Linux AppImage">
+            <div class="codeblock__bar"><span></span><span></span><span></span> run the appimage</div>
+            <pre><code><span class="c-comment"># grab the .AppImage from the latest release, then make it executable</span>
+chmod +x Copperline-x86_64.AppImage
+
+<span class="c-comment"># run with a Kickstart ROM, or a config file</span>
+./Copperline-x86_64.AppImage path/to/kickstart.rom
+./Copperline-x86_64.AppImage <span class="c-flag">--config</span> copperline.toml</code></pre>
+          </div>
+
+          <div class="codeblock" role="group" aria-label="Install with Homebrew on Linux">
+            <div class="codeblock__bar"><span></span><span></span><span></span> or install with homebrew</div>
+            <pre><code><span class="c-comment"># with Homebrew on Linux, tap the repository and install</span>
+brew tap LinuxJedi/copperline https://github.com/LinuxJedi/Copperline
+brew install copperline
+
+<span class="c-comment"># or build the latest development version from main</span>
+brew install <span class="c-flag">--HEAD</span> copperline</code></pre>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="panel-windows" role="tabpanel" aria-labelledby="tab-windows" hidden>
+          <div class="codeblock" role="group" aria-label="Windows availability">
+            <div class="codeblock__bar"><span></span><span></span><span></span> windows</div>
+            <pre><code><span class="c-comment"># prebuilt Windows binaries are coming soon</span>
+<span class="c-comment"># in the meantime, build from source with the steps below</span></code></pre>
+          </div>
+        </div>
       </div>
 
       <div class="codeblock" role="group" aria-label="Build from source">
@@ -288,6 +337,50 @@ cargo build <span class="c-flag">--release</span>
     </nav>
   </div>
 </footer>
+
+<script>
+  (function () {
+    var tablist = document.querySelector('.tabs__list');
+    if (!tablist) return;
+
+    var tabs = Array.prototype.slice.call(tablist.querySelectorAll('.tab'));
+
+    function selectTab(tab, focus) {
+      tabs.forEach(function (t) {
+        var selected = t === tab;
+        t.setAttribute('aria-selected', selected ? 'true' : 'false');
+        t.tabIndex = selected ? 0 : -1;
+        var panel = document.getElementById(t.getAttribute('aria-controls'));
+        if (panel) panel.hidden = !selected;
+      });
+      if (focus) tab.focus();
+    }
+
+    tabs.forEach(function (tab, i) {
+      tab.addEventListener('click', function () { selectTab(tab, false); });
+      tab.addEventListener('keydown', function (e) {
+        var dir = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+        if (!dir) return;
+        e.preventDefault();
+        selectTab(tabs[(i + dir + tabs.length) % tabs.length], true);
+      });
+    });
+
+    // Auto-detect the visitor's OS and pre-select the matching tab.
+    var ua = (navigator.userAgent || '').toLowerCase();
+    var platform = (navigator.platform || '').toLowerCase();
+    var os = 'macos';
+    if (/win/.test(platform) || ua.indexOf('windows') !== -1) {
+      os = 'windows';
+    } else if (/linux|x11/.test(platform) || (ua.indexOf('linux') !== -1 && ua.indexOf('android') === -1)) {
+      os = 'linux';
+    } else if (/mac/.test(platform) || ua.indexOf('mac os') !== -1) {
+      os = 'macos';
+    }
+    var match = tabs.filter(function (t) { return t.getAttribute('data-os') === os; })[0];
+    if (match) selectTab(match, false);
+  })();
+</script>
 
 </body>
 </html>

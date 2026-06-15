@@ -333,6 +333,31 @@ img { max-width: 100%; display: block; }
 .c-comment { color: var(--ink-mute); font-style: italic; }
 .c-flag { color: var(--copper-hi); }
 
+/* platform tabs */
+.tabs { margin-top: 2.2rem; }
+.tabs__list {
+  display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center;
+  padding: 0.35rem; border: 1px solid var(--line); border-radius: 12px;
+  background: rgba(255,255,255,0.02);
+}
+.tab {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  flex: 1 1 0; min-width: 120px; justify-content: center;
+  padding: 0.6rem 1rem; border: 0; border-radius: 9px; cursor: pointer;
+  font-family: var(--font-mono); font-size: 0.88rem; color: var(--ink-soft);
+  background: transparent; transition: background 0.15s ease, color 0.15s ease;
+}
+.tab svg { color: var(--ink-mute); transition: color 0.15s ease; }
+.tab:hover { color: var(--ink); background: rgba(255,255,255,0.03); }
+.tab[aria-selected="true"] {
+  color: var(--ink); background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.tab[aria-selected="true"] svg { color: var(--copper); }
+.tab:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.tab-panel[hidden] { display: none; }
+.tab-panel .codeblock { margin-top: 1rem; }
+
 /* =============================== FOOTER =============================== */
 .footer {
   border-top: 1px solid var(--line);
