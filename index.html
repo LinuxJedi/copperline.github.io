@@ -38,6 +38,7 @@
     <a href="#features">Features</a>
     <a href="#shots">Screenshots</a>
     <a href="#debugger">Debugger</a>
+    <a href="#headless">Headless</a>
     <a href="#hardware">Hardware</a>
     <a href="#download">Download</a>
     <a class="nav__gh" href="https://github.com/LinuxJedi/Copperline" target="_blank" rel="noopener">GitHub</a>
@@ -104,8 +105,9 @@
         <span class="card__tag">chipsets</span>
         <h3>OCS, ECS &amp; AGA</h3>
         <p>Independent Agnus / Denise revisions and machine profiles from the A500 to the
-           A1200, plus CDTV and CD32. Boots Kickstart 1.3 / 2.05 / 3.1 and DiagROM, and
-           runs the timing-sensitive regression set at real speed.</p>
+           A1200, plus CDTV and CD32. Boots the bundled AROS ROM out of the box - no
+           Kickstart needed - as well as Kickstart 1.3 / 2.05 / 3.1 and DiagROM, and runs
+           the timing-sensitive regression set at real speed.</p>
       </article>
 
       <article class="card">
@@ -125,11 +127,27 @@
       </article>
 
       <article class="card">
+        <span class="card__tag">storage</span>
+        <h3>Disks, drives &amp; expansion</h3>
+        <p>Up to four floppies with multi-disk swap playlists, Gayle IDE and an A2091 SCSI
+           board carrying up to seven drives, Zorro II / III autoconfig, and a host folder
+           mounted straight as a bootable hard disk.</p>
+      </article>
+
+      <article class="card">
         <span class="card__tag">graphics</span>
         <h3>The full AGA path</h3>
         <p>8 bitplanes, a 256-entry 25-bit palette, HAM8, FMODE wide fetch, dual playfield,
            EHB, sprites and hardware collisions - replayed by beam position so the renderer
            never races the chipset.</p>
+      </article>
+
+      <article class="card">
+        <span class="card__tag">presentation</span>
+        <h3>A CRT, not a flat grid</h3>
+        <p>Optional phosphor persistence, a motion-adaptive deinterlacer for laced screens,
+           and tv / full overscan. The woven field is presented at a TV-like 4:3, the way
+           the hardware drove a real monitor.</p>
       </article>
 
       <article class="card">
@@ -149,7 +167,9 @@
     <div class="section__head">
       <span class="kicker">// screenshots</span>
       <h2>See it run</h2>
-      <p>Real captures from the emulator window - chrome, status bar and all.</p>
+      <p>Real captures from the emulator window - chrome, status bar and all. Save a still
+         to PNG, or record the screen to a lossless AVI - both locked to the emulated clock,
+         so even a warp-speed capture plays back at the right speed.</p>
     </div>
 
     <figure class="shot shot--feature">
@@ -237,6 +257,49 @@
 
   <hr class="copperline">
 
+  <!-- ===================== HEADLESS ===================== -->
+  <section id="headless" class="section">
+    <div class="section__head">
+      <span class="kicker">// headless &amp; deterministic</span>
+      <h2>Scriptable, and reproducible by construction</h2>
+      <p>The core is deterministic and independent of the host: a windowless, unthrottled
+         run produces the <em>same</em> emulated result as a real-time windowed one, given the
+         same inputs and media. Captures reproduce by construction - which is also what lets
+         the debugger step backwards.</p>
+    </div>
+
+    <div class="headless">
+      <ul class="feature-list">
+        <li><strong>Drive it from the command line.</strong> Override the machine with
+           <code>--model</code>, <code>--cpu</code>, <code>--chip</code> and friends - no
+           config file required.</li>
+        <li><strong>Script input and capture.</strong> Press keys, click, move the mouse and
+           waggle the joystick on an emulated-time schedule, then grab a PNG, a frame dump, a
+           save state, or a 44.1 kHz WAV.</li>
+        <li><strong>Record and replay.</strong> Capture a whole session to a
+           <code>.clscript</code> and replay it byte-for-byte - a bug report that always
+           reproduces.</li>
+        <li><strong>Built for agents.</strong> Copperline began as an emulator you could hand
+           to an AI agent: feed it a timestamp or a snapshot and it investigates from
+           screenshots and debug output, automatically.</li>
+      </ul>
+
+      <div class="codeblock" role="group" aria-label="A scripted headless capture">
+        <div class="codeblock__bar"><span></span><span></span><span></span> scripted capture</div>
+        <pre><code><span class="c-comment"># boot a disk, tap space, wait, grab a screenshot - no window</span>
+copperline game.adf <span class="c-flag">--noaudio</span> \
+  <span class="c-flag">--press-after</span> 4 SPACE \
+  <span class="c-flag">--screenshot-after</span> 12 shot.png
+
+<span class="c-comment"># record a whole session, then replay it byte-identically</span>
+copperline game.adf <span class="c-flag">--record-input</span> run.clscript
+copperline game.adf <span class="c-flag">--script</span> run.clscript <span class="c-flag">--audio-wav</span> run.wav</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <hr class="copperline">
+
   <!-- ===================== HARDWARE ===================== -->
   <section id="hardware" class="section">
     <div class="section__head">
@@ -273,7 +336,10 @@
 
     <p class="hardware__note">
       A vendored pure-Rust <a href="https://github.com/LinuxJedi/Copperline/tree/main/vendor/m68k" target="_blank" rel="noopener">m68k</a>
-      core drives the CPU. The detailed architecture and timing model live in the
+      core drives the CPU, with 68000 cycle counts validated against the TomHarte
+      SingleStepTests to within about a percent. A bootable timing-test disk cross-checks
+      chip-bus timing against real hardware and other emulators, and the vAmigaTS suite runs
+      as a compatibility regression. The detailed architecture and timing model live in the
       <a href="https://github.com/LinuxJedi/Copperline/tree/main/docs" target="_blank" rel="noopener">internals docs</a>.
     </p>
   </section>
@@ -286,7 +352,9 @@
       <span class="kicker">// download</span>
       <h2>Get Copperline</h2>
       <p>Grab the latest release, or build from source with a stable Rust toolchain.
-         Developed and tested on macOS, with a Linux AppImage and a Windows build available.</p>
+         Developed and tested on macOS, with a Linux AppImage and a Windows build available.
+         Every build ships the open-source AROS boot ROM, so it runs out of the box with no
+         Kickstart required.</p>
 
       <a class="btn btn--primary btn--big" href="https://github.com/LinuxJedi/Copperline/releases/latest" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 3v10.5l3.3-3.3 1.4 1.4L12 17l-4.7-5.4 1.4-1.4L12 13.5V3h0zM5 19h14v2H5z"/></svg>
@@ -327,7 +395,10 @@ brew install <span class="c-flag">--HEAD</span> copperline</code></pre>
             <pre><code><span class="c-comment"># grab the .AppImage from the latest release, then make it executable</span>
 chmod +x Copperline-0.5.0-x86_64.AppImage
 
-<span class="c-comment"># run with a Kickstart ROM, or a config file</span>
+<span class="c-comment"># run it - the bundled AROS ROM means no Kickstart is required</span>
+./Copperline-0.5.0-x86_64.AppImage
+
+<span class="c-comment"># or boot your own Kickstart ROM, or a config file</span>
 ./Copperline-0.5.0-x86_64.AppImage path/to/kickstart.rom
 ./Copperline-0.5.0-x86_64.AppImage <span class="c-flag">--config</span> copperline.toml</code></pre>
           </div>
@@ -347,6 +418,8 @@ brew install <span class="c-flag">--HEAD</span> copperline</code></pre>
           <div class="codeblock" role="group" aria-label="Run the Windows build">
             <div class="codeblock__bar"><span></span><span></span><span></span> run the windows build</div>
             <pre><code><span class="c-comment"># download and extract Copperline-0.5.0-win-x64.zip, then from a terminal</span>
+<span class="c-comment"># with no ROM it boots the bundled AROS Kickstart replacement</span>
+copperline.exe
 copperline.exe path\to\kickstart.rom
 copperline.exe <span class="c-flag">--config</span> copperline.toml</code></pre>
           </div>
@@ -360,7 +433,10 @@ git clone https://github.com/LinuxJedi/Copperline.git
 cd Copperline
 cargo build <span class="c-flag">--release</span>
 
-<span class="c-comment"># run with a Kickstart ROM, or a config file</span>
+<span class="c-comment"># run it - with no ROM it boots the bundled AROS Kickstart replacement</span>
+./target/release/copperline
+
+<span class="c-comment"># or boot your own Kickstart ROM, or a config file</span>
 ./target/release/copperline path/to/kickstart.rom
 ./target/release/copperline <span class="c-flag">--config</span> copperline.toml</code></pre>
       </div>

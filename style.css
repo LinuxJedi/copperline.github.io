@@ -355,6 +355,32 @@ kbd {
   background: var(--surface-2); color: var(--ink);
 }
 
+/* =============================== HEADLESS ============================== */
+.headless {
+  display: grid; grid-template-columns: 1fr; gap: 1.8rem;
+  align-items: start;
+}
+@media (min-width: 880px) {
+  .headless { grid-template-columns: 0.92fr 1.08fr; gap: 2.4rem; align-items: center; }
+}
+.headless .codeblock { margin-top: 0; }
+
+.feature-list { list-style: none; display: grid; gap: 1rem; }
+.feature-list li {
+  position: relative; padding-left: 1.5rem;
+  color: var(--ink-soft); font-size: 0.98rem;
+}
+.feature-list li::before {
+  content: ""; position: absolute; left: 0; top: 0.55em;
+  width: 8px; height: 8px; border-radius: 2px;
+  background: linear-gradient(135deg, var(--copper-hi), var(--copper-dp));
+  box-shadow: 0 0 8px rgba(232,145,84,0.5);
+}
+.feature-list strong { color: var(--ink); font-weight: 600; }
+.feature-list code {
+  font-family: var(--font-mono); font-size: 0.86em; color: var(--copper-hi);
+}
+
 /* =============================== HARDWARE BADGES ====================== */
 .badges {
   list-style: none; display: flex; flex-wrap: wrap; gap: 0.55rem;
