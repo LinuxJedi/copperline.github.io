@@ -37,6 +37,7 @@
   <nav class="nav__links">
     <a href="#features">Features</a>
     <a href="#shots">Screenshots</a>
+    <a href="#debugger">Debugger</a>
     <a href="#hardware">Hardware</a>
     <a href="#download">Download</a>
     <a class="nav__gh" href="https://github.com/LinuxJedi/Copperline" target="_blank" rel="noopener">GitHub</a>
@@ -134,8 +135,9 @@
       <article class="card">
         <span class="card__tag">tooling</span>
         <h3>Deterministic by design</h3>
-        <p>An in-window debugger, deterministic save states, input recording / replay, and
-           headless screenshot &amp; frame-dump capture. Every replay is byte-identical.</p>
+        <p>An in-window debugger that steps <strong>backwards</strong>, deterministic save
+           states, input recording / replay, and headless screenshot &amp; frame-dump
+           capture. Every replay is byte-identical.</p>
       </article>
     </div>
   </section>
@@ -179,6 +181,58 @@
         <img src="assets/shot-statusbar.png" alt="Close-up of the Copperline status bar showing power, floppy and hard-disk LEDs, track counter, disk controls, volume slider and power buttons" loading="lazy">
       </figure>
     </div>
+  </section>
+
+  <hr class="copperline">
+
+  <!-- ===================== DEBUGGER ===================== -->
+  <section id="debugger" class="section">
+    <div class="section__head">
+      <span class="kicker">// debugger</span>
+      <h2>A debugger that runs time backwards</h2>
+      <p>Press <kbd>Cmd</kbd>+<kbd>B</kbd> to pause and open the in-window debugger:
+         a live 68000 disassembly, the custom-chip state decoded bit by bit, the Copper
+         list, a hex dump, and breakpoints / watchpoints. Then step the machine
+         <em>backwards</em>.</p>
+    </div>
+
+    <div class="debugger">
+      <figure class="debugger__shot">
+        <img src="assets/shot-debugger.png" alt="The Copperline debugger window on the CPU tab, showing the register file, a live 68000 disassembly, and the transport controls including the reverse Frame, Step and Run buttons" loading="lazy">
+        <figcaption><strong>The CPU tab.</strong> Register file, live disassembly that
+           follows the PC, and the transport row - with reverse controls on the right.</figcaption>
+      </figure>
+
+      <div class="debugger__panel">
+        <span class="card__tag">reverse debugging</span>
+        <h3>Step back without a record layer</h3>
+        <p>The recurring hard question in a corruption bug is "the value at address X is
+           wrong by the time I look - <em>which instruction wrote it?</em>". Stop at the
+           symptom, then walk backwards to the culprit.</p>
+        <p>Because the core is deterministic and already snapshots the whole machine, going
+           back in time needs no special record layer the way a tool like <code>rr</code>
+           does. The emulator keeps a ring of in-memory snapshots; to reach an earlier
+           point it restores the nearest one and replays forward - byte-identical.</p>
+
+        <ul class="rev-controls" aria-label="Reverse transport controls">
+          <li><span class="rev-controls__key">&lt; Step</span> one instruction backward</li>
+          <li><span class="rev-controls__key">&lt; Frame</span> to the previous video frame</li>
+          <li><span class="rev-controls__key">&lt; Run</span> back to the previous breakpoint</li>
+        </ul>
+
+        <p class="debugger__note">There is also a headless "last writer" reverse watchpoint
+           for automated root-cause hunts. See the
+           <a href="https://github.com/LinuxJedi/Copperline/blob/main/docs/debugger/reverse.md" target="_blank" rel="noopener">reverse-debugging guide</a>.</p>
+      </div>
+    </div>
+
+    <ul class="dbg-tabs" aria-label="Debugger tabs">
+      <li><span class="dbg-tabs__name">CPU</span> Registers, decoded SR flags, and a live disassembly that follows the PC.</li>
+      <li><span class="dbg-tabs__name">Chipset</span> DMACON / INTENA / INTREQ, Copper state, the display window and every pointer, decoded bit by bit.</li>
+      <li><span class="dbg-tabs__name">Copper</span> The Copper list disassembled from COP1LC, with the current fetch highlighted.</li>
+      <li><span class="dbg-tabs__name">Memory</span> A hex / ASCII dump you can page or jump to any address.</li>
+      <li><span class="dbg-tabs__name">Break</span> PC breakpoints plus memory and chipset-register watchpoints, whichever bus master writes.</li>
+    </ul>
   </section>
 
   <hr class="copperline">
