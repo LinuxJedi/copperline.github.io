@@ -38,6 +38,7 @@
     <a href="#features">Features</a>
     <a href="#shots">Screenshots</a>
     <a href="#debugger">Debugger</a>
+    <a href="#analyzer">Analyzer</a>
     <a href="#headless">Headless</a>
     <a href="#hardware">Hardware</a>
     <a href="#download">Download</a>
@@ -152,9 +153,9 @@
       <article class="card">
         <span class="card__tag">tooling</span>
         <h3>Deterministic by design</h3>
-        <p>An in-window debugger that steps <strong>backwards</strong>, deterministic save
-           states, input recording / replay, and headless screenshot &amp; frame-dump
-           capture. Every replay is byte-identical.</p>
+        <p>An in-window debugger that steps <strong>backwards</strong>, a chip-bus frame
+           analyzer, deterministic save states, input recording / replay, and headless
+           screenshot &amp; frame-dump capture. Every replay is byte-identical.</p>
       </article>
     </div>
   </section>
@@ -251,6 +252,62 @@
       <li><span class="dbg-tabs__name">Copper</span> The Copper list disassembled from COP1LC, with the current fetch highlighted.</li>
       <li><span class="dbg-tabs__name">Memory</span> A hex / ASCII dump you can page or jump to any address.</li>
       <li><span class="dbg-tabs__name">Break</span> PC breakpoints plus memory and chipset-register watchpoints, whichever bus master writes.</li>
+    </ul>
+  </section>
+
+  <hr class="copperline">
+
+  <!-- ===================== ANALYZER ===================== -->
+  <section id="analyzer" class="section">
+    <div class="section__head">
+      <span class="kicker">// frame analyzer</span>
+      <h2>Watch the chip bus, cycle by cycle</h2>
+      <p>New in 0.6.0: pause the machine and open the chip-bus frame analyzer. It paints one
+         captured frame as the full raster - x is hpos in colour clocks, y is the beam line -
+         with every cycle coloured by the bus master that owned it. The contention the rest of
+         this page describes becomes something you can see.</p>
+    </div>
+
+    <div class="analyzer">
+      <figure class="analyzer__shot">
+        <img src="assets/shot-analyzer.png" alt="The Copperline frame analyzer window: a full-raster map of one frame with every colour clock coloured by its chip-bus owner, a per-owner cycle tally with percentages, blitter grant and wait figures, and a selected-scanline strip" loading="lazy">
+        <figcaption><strong>One captured frame.</strong> 313 beam lines by 227 colour clocks,
+           every cycle coloured by the bus master that owned it - here bitplane and blitter DMA
+           dominate a busy effect.</figcaption>
+      </figure>
+
+      <div class="analyzer__panel">
+        <span class="card__tag">chip-bus arbitration</span>
+        <h3>Every colour clock has an owner</h3>
+        <p>Refresh, bitplane, sprite, disk and audio DMA, the Copper, the blitter and the CPU
+           all compete for one chip bus. The analyzer tallies who won every slot across the
+           frame, so a dropped line or a blit that starves the CPU shows up as a shape, not a
+           hunch.</p>
+        <p>It breaks out blitter grant against wait - the cycles the blitter held the bus
+           versus the cycles it stalled behind higher-priority DMA - and you can click any
+           cycle to read back its line, hpos and owner.</p>
+
+        <p class="owner-list__cap">// chip-bus owners, one frame</p>
+        <ul class="owner-list" aria-label="Per-owner chip-bus cycle share for one captured frame">
+          <li style="--c:#4076e6"><span class="owner-list__sw"></span><span class="owner-list__name">bitplane</span><span class="owner-list__bar"><i style="width:30.4%"></i></span><span class="owner-list__pct">30.4%</span></li>
+          <li style="--c:#de4e4c"><span class="owner-list__sw"></span><span class="owner-list__name">blitter</span><span class="owner-list__bar"><i style="width:27.5%"></i></span><span class="owner-list__pct">27.5%</span></li>
+          <li style="--c:#e6e8e0"><span class="owner-list__sw"></span><span class="owner-list__name">cpu</span><span class="owner-list__bar"><i style="width:21.0%"></i></span><span class="owner-list__pct">21.0%</span></li>
+          <li style="--c:#39404a"><span class="owner-list__sw"></span><span class="owner-list__name">idle</span><span class="owner-list__bar"><i style="width:12.8%"></i></span><span class="owner-list__pct">12.8%</span></li>
+          <li style="--c:#eece48"><span class="owner-list__sw"></span><span class="owner-list__name">copper</span><span class="owner-list__bar"><i style="width:3.2%"></i></span><span class="owner-list__pct">3.2%</span></li>
+          <li style="--c:#44b4be"><span class="owner-list__sw"></span><span class="owner-list__name">refresh</span><span class="owner-list__bar"><i style="width:1.8%"></i></span><span class="owner-list__pct">1.8%</span></li>
+          <li style="--c:#be7a36"><span class="owner-list__sw"></span><span class="owner-list__name">disk</span><span class="owner-list__bar"><i style="width:1.3%"></i></span><span class="owner-list__pct">1.3%</span></li>
+          <li style="--c:#d454dc"><span class="owner-list__sw"></span><span class="owner-list__name">sprite</span><span class="owner-list__bar"><i style="width:1.2%"></i></span><span class="owner-list__pct">1.2%</span></li>
+          <li style="--c:#48be60"><span class="owner-list__sw"></span><span class="owner-list__name">audio</span><span class="owner-list__bar"><i style="width:0.8%"></i></span><span class="owner-list__pct">0.8%</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <ul class="dbg-tabs" aria-label="What the frame analyzer surfaces">
+      <li><span class="dbg-tabs__name">Raster map</span> The whole frame as hpos by beam line, every colour clock coloured by its owner, with a white box around the captured display.</li>
+      <li><span class="dbg-tabs__name">Owner tally</span> Per-master cycle counts and percentages for the frame - refresh, bitplane, sprite, disk, audio, Copper, blitter, CPU and idle.</li>
+      <li><span class="dbg-tabs__name">Blitter grant / wait</span> How much of the frame the blitter was granted the bus, and the cycles it spent waiting behind each DMA channel.</li>
+      <li><span class="dbg-tabs__name">Selected scanline</span> Pin a line and replay its bus ownership one colour clock at a time, with the picked slot's owner decoded.</li>
+      <li><span class="dbg-tabs__name">Register markers</span> Chipset register writes overlaid on the raster at the position where they landed.</li>
     </ul>
   </section>
 
@@ -392,14 +449,14 @@ brew install <span class="c-flag">--HEAD</span> copperline</code></pre>
           <div class="codeblock" role="group" aria-label="Run the Linux AppImage">
             <div class="codeblock__bar"><span></span><span></span><span></span> run the appimage</div>
             <pre><code><span class="c-comment"># grab the .AppImage from the latest release, then make it executable</span>
-chmod +x Copperline-0.5.0-x86_64.AppImage
+chmod +x Copperline-0.6.0-x86_64.AppImage
 
 <span class="c-comment"># run it - the bundled AROS ROM means no Kickstart is required</span>
-./Copperline-0.5.0-x86_64.AppImage
+./Copperline-0.6.0-x86_64.AppImage
 
 <span class="c-comment"># or boot your own Kickstart ROM, or a config file</span>
-./Copperline-0.5.0-x86_64.AppImage path/to/kickstart.rom
-./Copperline-0.5.0-x86_64.AppImage <span class="c-flag">--config</span> copperline.toml</code></pre>
+./Copperline-0.6.0-x86_64.AppImage path/to/kickstart.rom
+./Copperline-0.6.0-x86_64.AppImage <span class="c-flag">--config</span> copperline.toml</code></pre>
           </div>
 
           <div class="codeblock" role="group" aria-label="Install with Homebrew on Linux">
@@ -416,7 +473,7 @@ brew install <span class="c-flag">--HEAD</span> copperline</code></pre>
         <div class="tab-panel" id="panel-windows" role="tabpanel" aria-labelledby="tab-windows" hidden>
           <div class="codeblock" role="group" aria-label="Run the Windows build">
             <div class="codeblock__bar"><span></span><span></span><span></span> run the windows build</div>
-            <pre><code><span class="c-comment"># download and extract Copperline-0.5.0-win-x64.zip, then from a terminal</span>
+            <pre><code><span class="c-comment"># download and extract Copperline-0.6.0-win-x64.zip, then from a terminal</span>
 <span class="c-comment"># with no ROM it boots the bundled AROS Kickstart replacement</span>
 copperline.exe
 copperline.exe path\to\kickstart.rom

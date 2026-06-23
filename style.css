@@ -355,6 +355,65 @@ kbd {
   background: var(--surface-2); color: var(--ink);
 }
 
+/* =============================== FRAME ANALYZER ======================= */
+.analyzer {
+  display: grid; grid-template-columns: 1fr; gap: 1.8rem;
+  align-items: center;
+}
+@media (min-width: 880px) {
+  .analyzer { grid-template-columns: 1.05fr 0.95fr; gap: 2.4rem; }
+}
+.analyzer__shot { margin: 0; }
+.analyzer__shot img {
+  width: 100%; border-radius: var(--radius); border: 1px solid var(--line);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+}
+.analyzer__shot figcaption {
+  margin-top: 0.8rem; color: var(--ink-mute); font-size: 0.92rem;
+}
+.analyzer__shot figcaption strong { color: var(--ink-soft); font-weight: 600; }
+
+.analyzer__panel {
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
+  border: 1px solid var(--line); border-radius: var(--radius);
+  padding: clamp(1.4rem, 3vw, 2rem);
+}
+.analyzer__panel .card__tag { display: block; }
+.analyzer__panel h3 {
+  font-family: var(--font-display); font-weight: 600; font-size: 1.4rem;
+  margin: 0.5rem 0 0.7rem;
+}
+.analyzer__panel p { color: var(--ink-soft); font-size: 0.98rem; margin-bottom: 0.9rem; }
+
+/* per-owner chip-bus breakdown, mirroring the tool's Owner cck panel */
+.analyzer__panel .owner-list__cap {
+  font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.03em;
+  color: var(--copper-hi); margin: 1.3rem 0 0.7rem;
+}
+.owner-list {
+  list-style: none; display: grid; gap: 0.42rem;
+  font-family: var(--font-mono); font-size: 0.82rem;
+}
+.owner-list li {
+  display: grid; grid-template-columns: 12px 5.2em 1fr 3.2em;
+  align-items: center; gap: 0.6rem;
+  color: var(--ink-soft);
+}
+.owner-list__sw {
+  width: 11px; height: 11px; border-radius: 2px;
+  background: var(--c);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.35);
+}
+.owner-list__bar {
+  height: 7px; border-radius: 4px; overflow: hidden;
+  background: rgba(255,255,255,0.05);
+}
+.owner-list__bar > i {
+  display: block; height: 100%; border-radius: 4px;
+  background: var(--c);
+}
+.owner-list__pct { color: var(--ink); text-align: right; }
+
 /* =============================== HEADLESS ============================== */
 .headless {
   display: grid; grid-template-columns: 1fr; gap: 1.8rem;
