@@ -37,6 +37,7 @@
   <nav class="nav__links">
     <a href="#features">Features</a>
     <a href="#shots">Screenshots</a>
+    <a href="#launcher">Launcher</a>
     <a href="#debugger">Debugger</a>
     <a href="#analyzer">Analyzer</a>
     <a href="#headless">Headless</a>
@@ -135,6 +136,15 @@
       </article>
 
       <article class="card">
+        <span class="card__tag">expansion</span>
+        <h3>Pluggable Zorro boards</h3>
+        <p>Functional Zorro boards sit behind a clean device boundary, so external WASM
+           plugin boards can add deterministic read / write / tick / interrupt behaviour,
+           with optional DMA, file resources and networking. A built-in Commodore A2065
+           Ethernet board (Am7990 LANCE) ships with a loopback backend.</p>
+      </article>
+
+      <article class="card">
         <span class="card__tag">graphics</span>
         <h3>The full AGA path</h3>
         <p>8 bitplanes, a 256-entry 25-bit palette, HAM8, FMODE wide fetch, dual playfield,
@@ -201,6 +211,47 @@
         <img src="assets/shot-statusbar.png" alt="Close-up of the Copperline status bar showing power, floppy and hard-disk LEDs, track counter, disk controls, volume slider and power buttons" loading="lazy">
       </figure>
     </div>
+  </section>
+
+  <hr class="copperline">
+
+  <!-- ===================== LAUNCHER ===================== -->
+  <section id="launcher" class="section">
+    <div class="section__head">
+      <span class="kicker">// launcher</span>
+      <h2>Set up the machine, no config file</h2>
+      <p>Launch Copperline with no options and it opens a full machine-configuration
+         launcher - also reachable from the menu. Pick a base profile, tweak it, then
+         <em>Run</em> - no hand-written TOML required to get going.</p>
+    </div>
+
+    <div class="launcher">
+      <figure class="launcher__shot">
+        <img src="assets/shot-launcher.png" alt="The Copperline machine-configuration launcher on the Memory tab of an A1200 profile, showing machine profile buttons across the top, a category sidebar, and Chip / Fast / Slow RAM controls" loading="lazy">
+        <figcaption><strong>Machine Configuration.</strong> Profile tabs across the top,
+           categories down the side - here the A1200's chip, fast and slow RAM.</figcaption>
+      </figure>
+
+      <div class="launcher__panel">
+        <span class="card__tag">machine configuration</span>
+        <h3>Every setting on one screen</h3>
+        <p>Edit the machine profile, chipset, CPU, memory, ROM, floppy, hard disk, CD,
+           Zorro boards, audio / video and emulation behaviour through a graphical
+           front-end - including settings declared by external plugin boards.</p>
+        <p>It reads and writes the same TOML schema as a hand-edited config, so
+           <em>Load</em>, <em>Save</em>, <em>Run</em> and <em>Defaults</em> round-trip
+           cleanly with the config files you already keep.</p>
+      </div>
+    </div>
+
+    <ul class="dbg-tabs" aria-label="What the launcher configures">
+      <li><span class="dbg-tabs__name">Profiles</span> A1000, A500 / OCS / +, A600, A1200, CDTV and CD32 - start from a real machine and adjust.</li>
+      <li><span class="dbg-tabs__name">Chipset &amp; CPU</span> Agnus / Denise revisions, 68000 - 68040 selection, clock, caches and FPU.</li>
+      <li><span class="dbg-tabs__name">Memory &amp; ROM</span> Chip / fast / slow RAM, Zorro III RAM where the CPU allows it, and the boot ROM.</li>
+      <li><span class="dbg-tabs__name">Storage</span> Floppy drives and swap lists, IDE and SCSI hard disks, and CD images.</li>
+      <li><span class="dbg-tabs__name">Zorro &amp; plugins</span> Autoconfig boards, external WASM plugin boards with their own settings, and A2065 networking.</li>
+      <li><span class="dbg-tabs__name">A/V &amp; emulation</span> Audio and video presentation plus the emulation behaviour controls.</li>
+    </ul>
   </section>
 
   <hr class="copperline">
@@ -380,6 +431,8 @@ copperline game.adf <span class="c-flag">--script</span> run.clscript <span clas
       <li>Gayle IDE</li>
       <li>A2091 SCSI</li>
       <li>Zorro II / III autoconfig</li>
+      <li>A2065 Ethernet</li>
+      <li>WASM Zorro plugins</li>
       <li>OCS sprites</li>
       <li>HAM6 / HAM8 / EHB</li>
       <li>Dual playfield</li>
@@ -436,7 +489,7 @@ copperline game.adf <span class="c-flag">--script</span> run.clscript <span clas
         <div class="tab-panel" id="panel-macos" role="tabpanel" aria-labelledby="tab-macos">
           <div class="codeblock" role="group" aria-label="Run the macOS .dmg">
             <div class="codeblock__bar"><span></span><span></span><span></span> run the macos .dmg</div>
-            <pre><code><span class="c-comment"># open Copperline-0.7.0-macos-universal.dmg and drag</span>
+            <pre><code><span class="c-comment"># open Copperline-0.8.0-macos-universal.dmg and drag</span>
 <span class="c-comment"># Copperline.app into your Applications folder, then launch it</span>
 
 <span class="c-comment"># the build is not notarized, so macOS blocks the first launch.</span>
@@ -459,14 +512,14 @@ brew install <span class="c-flag">--HEAD</span> copperline</code></pre>
           <div class="codeblock" role="group" aria-label="Run the Linux AppImage">
             <div class="codeblock__bar"><span></span><span></span><span></span> run the appimage</div>
             <pre><code><span class="c-comment"># grab the .AppImage from the latest release, then make it executable</span>
-chmod +x Copperline-0.7.0-x86_64.AppImage
+chmod +x Copperline-0.8.0-x86_64.AppImage
 
 <span class="c-comment"># run it - the bundled AROS ROM means no Kickstart is required</span>
-./Copperline-0.7.0-x86_64.AppImage
+./Copperline-0.8.0-x86_64.AppImage
 
 <span class="c-comment"># or boot your own Kickstart ROM, or a config file</span>
-./Copperline-0.7.0-x86_64.AppImage path/to/kickstart.rom
-./Copperline-0.7.0-x86_64.AppImage <span class="c-flag">--config</span> copperline.toml</code></pre>
+./Copperline-0.8.0-x86_64.AppImage path/to/kickstart.rom
+./Copperline-0.8.0-x86_64.AppImage <span class="c-flag">--config</span> copperline.toml</code></pre>
           </div>
 
           <div class="codeblock" role="group" aria-label="Install with Homebrew on Linux">
@@ -483,7 +536,7 @@ brew install <span class="c-flag">--HEAD</span> copperline</code></pre>
         <div class="tab-panel" id="panel-windows" role="tabpanel" aria-labelledby="tab-windows" hidden>
           <div class="codeblock" role="group" aria-label="Run the Windows build">
             <div class="codeblock__bar"><span></span><span></span><span></span> run the windows build</div>
-            <pre><code><span class="c-comment"># download and extract Copperline-0.7.0-win-x64.zip, then from a terminal</span>
+            <pre><code><span class="c-comment"># download and extract Copperline-0.8.0-win-x64.zip, then from a terminal</span>
 <span class="c-comment"># with no ROM it boots the bundled AROS Kickstart replacement</span>
 copperline.exe
 copperline.exe path\to\kickstart.rom

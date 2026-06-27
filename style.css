@@ -355,6 +355,36 @@ kbd {
   background: var(--surface-2); color: var(--ink);
 }
 
+/* =============================== LAUNCHER ============================= */
+.launcher {
+  display: grid; grid-template-columns: 1fr; gap: 1.8rem;
+  align-items: center;
+}
+@media (min-width: 880px) {
+  .launcher { grid-template-columns: 1.05fr 0.95fr; gap: 2.4rem; }
+}
+.launcher__shot { margin: 0; }
+.launcher__shot img {
+  width: 100%; border-radius: var(--radius); border: 1px solid var(--line);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+}
+.launcher__shot figcaption {
+  margin-top: 0.8rem; color: var(--ink-mute); font-size: 0.92rem;
+}
+.launcher__shot figcaption strong { color: var(--ink-soft); font-weight: 600; }
+
+.launcher__panel {
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
+  border: 1px solid var(--line); border-radius: var(--radius);
+  padding: clamp(1.4rem, 3vw, 2rem);
+}
+.launcher__panel .card__tag { display: block; }
+.launcher__panel h3 {
+  font-family: var(--font-display); font-weight: 600; font-size: 1.4rem;
+  margin: 0.5rem 0 0.7rem;
+}
+.launcher__panel p { color: var(--ink-soft); font-size: 0.98rem; margin-bottom: 0.9rem; }
+
 /* =============================== FRAME ANALYZER ======================= */
 .analyzer {
   display: grid; grid-template-columns: 1fr; gap: 1.8rem;
