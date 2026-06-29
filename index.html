@@ -116,8 +116,9 @@
         <span class="card__tag">cpu</span>
         <h3>68000 through 68040</h3>
         <p>Selectable 68000 / 68EC020 / 68020 / 68030 / 68040 and clock, accurate 68000
-           cycle counts, optional on-chip caches, and a 68881 / 68882 FPU (default-on for
-           the 040).</p>
+           cycle counts, optional on-chip caches, and an 80-bit 68881 / 68882 FPU
+           (default-on for the 040) with pure-Rust softfloat transcendentals and
+           packed-decimal reals.</p>
       </article>
 
       <article class="card">
@@ -205,7 +206,8 @@
         <h3>Hardware at a glance</h3>
         <p>The bottom bar mirrors the front panel: power, floppy and hard-disk activity
            LEDs, a live floppy track counter, disk insert / swap / eject controls, an
-           audio volume slider, and shortcuts for the menu, screenshots, pause and power.</p>
+           audio volume slider, an input-mode toggle between keyboard and gamepad, and
+           shortcuts for the menu, screenshots, pause and power.</p>
       </div>
       <figure class="statusbar-callout__img">
         <img src="assets/shot-statusbar.png" alt="Close-up of the Copperline status bar showing power, floppy and hard-disk LEDs, track counter, disk controls, volume slider and power buttons" loading="lazy">
@@ -386,6 +388,9 @@
         <li><strong>Record and replay.</strong> Capture a whole session to a
            <code>.clscript</code> and replay it byte-for-byte - a bug report that always
            reproduces.</li>
+        <li><strong>Restore without the ROM.</strong> <code>--load-state</code> brings a
+           machine snapshot back even when the original Kickstart isn't on hand - the
+           save state carries the whole machine.</li>
         <li><strong>Built for agents.</strong> Copperline began as an emulator you could hand
            to an AI agent: feed it a timestamp or a snapshot and it investigates from
            screenshots and debug output, automatically.</li>
@@ -489,7 +494,7 @@ copperline game.adf <span class="c-flag">--script</span> run.clscript <span clas
         <div class="tab-panel" id="panel-macos" role="tabpanel" aria-labelledby="tab-macos">
           <div class="codeblock" role="group" aria-label="Run the macOS .dmg">
             <div class="codeblock__bar"><span></span><span></span><span></span> run the macos .dmg</div>
-            <pre><code><span class="c-comment"># open Copperline-0.8.0-macos-universal.dmg and drag</span>
+            <pre><code><span class="c-comment"># open Copperline-0.9.0-macos-universal.dmg and drag</span>
 <span class="c-comment"># Copperline.app into your Applications folder, then launch it</span>
 
 <span class="c-comment"># the build is not notarized, so macOS blocks the first launch.</span>
@@ -512,14 +517,14 @@ brew install <span class="c-flag">--HEAD</span> copperline</code></pre>
           <div class="codeblock" role="group" aria-label="Run the Linux AppImage">
             <div class="codeblock__bar"><span></span><span></span><span></span> run the appimage</div>
             <pre><code><span class="c-comment"># grab the .AppImage from the latest release, then make it executable</span>
-chmod +x Copperline-0.8.0-x86_64.AppImage
+chmod +x Copperline-0.9.0-x86_64.AppImage
 
 <span class="c-comment"># run it - the bundled AROS ROM means no Kickstart is required</span>
-./Copperline-0.8.0-x86_64.AppImage
+./Copperline-0.9.0-x86_64.AppImage
 
 <span class="c-comment"># or boot your own Kickstart ROM, or a config file</span>
-./Copperline-0.8.0-x86_64.AppImage path/to/kickstart.rom
-./Copperline-0.8.0-x86_64.AppImage <span class="c-flag">--config</span> copperline.toml</code></pre>
+./Copperline-0.9.0-x86_64.AppImage path/to/kickstart.rom
+./Copperline-0.9.0-x86_64.AppImage <span class="c-flag">--config</span> copperline.toml</code></pre>
           </div>
 
           <div class="codeblock" role="group" aria-label="Install with Homebrew on Linux">
@@ -536,7 +541,7 @@ brew install <span class="c-flag">--HEAD</span> copperline</code></pre>
         <div class="tab-panel" id="panel-windows" role="tabpanel" aria-labelledby="tab-windows" hidden>
           <div class="codeblock" role="group" aria-label="Run the Windows build">
             <div class="codeblock__bar"><span></span><span></span><span></span> run the windows build</div>
-            <pre><code><span class="c-comment"># download and extract Copperline-0.8.0-win-x64.zip, then from a terminal</span>
+            <pre><code><span class="c-comment"># download and extract Copperline-0.9.0-win-x64.zip, then from a terminal</span>
 <span class="c-comment"># with no ROM it boots the bundled AROS Kickstart replacement</span>
 copperline.exe
 copperline.exe path\to\kickstart.rom
