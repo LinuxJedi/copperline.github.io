@@ -18,10 +18,12 @@
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" type="image/png" href="favicon-32.png" sizes="32x32">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="alternate" type="application/rss+xml" title="Copperline News" href="https://copperline.dev/news/feed.xml">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- fonts are self-hosted; no third-party requests -->
+<link rel="preload" href="assets/fonts/ibm-plex-sans-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/chakra-petch-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/ibm-plex-mono-400.woff2" as="font" type="font/woff2" crossorigin>
 
 <link rel="stylesheet" href="style.css">
 </head>
@@ -37,12 +39,12 @@
   <nav class="nav__links">
     <a href="#features">Features</a>
     <a href="#shots">Screenshots</a>
-    <a href="#launcher">Launcher</a>
     <a href="#debugger">Debugger</a>
     <a href="#analyzer">Analyzer</a>
-    <a href="#headless">Headless</a>
-    <a href="#hardware">Hardware</a>
+    <a href="#status">Status</a>
     <a href="#download">Download</a>
+    <a href="#faq">FAQ</a>
+    <a href="news/">News</a>
     <a class="nav__gh" href="https://github.com/LinuxJedi/Copperline" target="_blank" rel="noopener">GitHub</a>
   </nav>
 </header>
@@ -76,11 +78,48 @@
           View source
         </a>
       </div>
-      <ul class="hero__chips reveal" style="--d:4" aria-label="Supported hardware">
+      <p class="hero__release reveal" style="--d:4">
+        <a href="news/copperline-0-9-0.html">0.9.0 is out &middot; read what's new</a>
+      </p>
+      <ul class="hero__chips reveal" style="--d:5" aria-label="Supported hardware">
         <li>68000 - 68040</li><li>OCS</li><li>ECS</li><li>AGA</li>
         <li>A1000 - A1200</li><li>CDTV</li><li>CD32</li><li>HAM8</li>
       </ul>
     </div>
+  </section>
+
+  <hr class="copperline">
+
+  <!-- ===================== QUICKSTART ===================== -->
+  <section id="quickstart" class="section section--quickstart">
+    <div class="section__head">
+      <span class="kicker">// zero to running</span>
+      <h2>Up and running in about a minute</h2>
+    </div>
+
+    <ol class="quickstart__steps">
+      <li>
+        <span class="quickstart__num">1</span>
+        <h3>Grab a build</h3>
+        <p>A macOS .dmg, a Linux AppImage or a Windows zip from
+           <a href="#download">the latest release</a> - or install with Homebrew.</p>
+      </li>
+      <li>
+        <span class="quickstart__num">2</span>
+        <h3>Open it</h3>
+        <p>Copperline boots the bundled open-source AROS ROM straight away.
+           No Kickstart hunt before you see a working machine.</p>
+      </li>
+      <li>
+        <span class="quickstart__num">3</span>
+        <h3>Insert a disk</h3>
+        <p>Load an ADF from the status bar's disk controls, or skip the window
+           entirely: <code>copperline game.adf</code>.</p>
+      </li>
+    </ol>
+
+    <p class="quickstart__note">Have real Kickstart ROMs and disk images? They work too - point the
+       launcher at them. Copperline just doesn't make you find them before you can try it.</p>
   </section>
 
   <hr class="copperline">
@@ -460,6 +499,74 @@ copperline game.adf <span class="c-flag">--script</span> run.clscript <span clas
 
   <hr class="copperline">
 
+  <!-- ===================== STATUS ===================== -->
+  <section id="status" class="section">
+    <div class="section__head">
+      <span class="kicker">// where it's at</span>
+      <h2>Current status</h2>
+      <p>Emulator pages tend to list only the good parts. Copperline is young and moving
+         fast, so here is the actual state of things - the rough edges included. This
+         list changes every release.</p>
+    </div>
+
+    <div class="status-grid">
+      <div class="status-col status-col--good">
+        <h3>Solid today</h3>
+        <ul>
+          <li>The OCS / ECS / AGA display path, HAM8 included, replayed by beam position.</li>
+          <li>Timing-sensitive OCS and AGA demos from the regression set, at real speed.</li>
+          <li>68000 - 68040 with the 68881 / 68882 FPU; 68000 cycle counts validated
+              against the SingleStepTests.</li>
+          <li>The deterministic core: byte-identical replays, save states, and the
+              reverse debugger built on them.</li>
+          <li>The tooling - debugger, frame analyzer, headless scripting - which is
+              half the point of the project.</li>
+          <li>Floppies (ADF / ADZ / DMS / SCP), Gayle IDE, A2091 SCSI, CDTV / CD32 CD.</li>
+        </ul>
+      </div>
+
+      <div class="status-col status-col--mid">
+        <h3>Rough edges</h3>
+        <ul>
+          <li>Developed and tested on macOS. The Linux and Windows builds are produced
+              by CI and get far less real-world exercise.</li>
+          <li>Host-folder hard disks are session-only: the Amiga can write to them, but
+              the changes are not written back to your host folder.</li>
+          <li>A2065 Ethernet ships with a loopback backend only - real host networking
+              backends are still on the list.</li>
+          <li>CD images are CUE/BIN only; plain .iso is not read yet.</li>
+        </ul>
+      </div>
+
+      <div class="status-col status-col--gap">
+        <h3>Not there yet</h3>
+        <ul>
+          <li>No fullscreen mode yet. Yes, really - it is near the top of the list.</li>
+          <li>No drag-and-drop disk insertion, and save states have a single slot with
+              no quick-save hotkeys.</li>
+          <li>No IPF (CAPS) protected-disk images - deliberately out of scope for the
+              built-in loader for now.</li>
+          <li>No HD (1.76 MB) or PC / CrossDOS floppies.</li>
+          <li>No autofire, and host keyboard layouts other than QWERTY are not mapped yet.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="status-next">
+      <span class="card__tag">// already merged for the next release</span>
+      <p>Development happens in the open, and <code>main</code> is well ahead of the
+         release you can download: 68060 support (superscalar dual-issue, branch cache),
+         the 68030 / 68040 PMMU, a GDB-flavoured debugger console, new Video, Audio and
+         IO-map debugger tabs, Copper breakpoints and beam traps, beam scrubbing in the
+         frame analyzer, MIDI out of Paula's serial port, and zipped floppy images -
+         those last two arrived as community pull requests.</p>
+      <p>The write-up lands on the <a href="news/">news page</a> when it ships. If you
+         can't wait, <code>brew install --HEAD copperline</code> builds main today.</p>
+    </div>
+  </section>
+
+  <hr class="copperline">
+
   <!-- ===================== DOWNLOAD ===================== -->
   <section id="download" class="section section--download">
     <div class="download">
@@ -494,7 +601,7 @@ copperline game.adf <span class="c-flag">--script</span> run.clscript <span clas
         <div class="tab-panel" id="panel-macos" role="tabpanel" aria-labelledby="tab-macos">
           <div class="codeblock" role="group" aria-label="Run the macOS .dmg">
             <div class="codeblock__bar"><span></span><span></span><span></span> run the macos .dmg</div>
-            <pre><code><span class="c-comment"># open Copperline-0.9.0-macos-universal.dmg and drag</span>
+            <pre><code><span class="c-comment"># open Copperline-<span class="relver">0.9.0</span>-macos-universal.dmg and drag</span>
 <span class="c-comment"># Copperline.app into your Applications folder, then launch it</span>
 
 <span class="c-comment"># the build is not notarized, so macOS blocks the first launch.</span>
@@ -517,14 +624,14 @@ brew install <span class="c-flag">--HEAD</span> copperline</code></pre>
           <div class="codeblock" role="group" aria-label="Run the Linux AppImage">
             <div class="codeblock__bar"><span></span><span></span><span></span> run the appimage</div>
             <pre><code><span class="c-comment"># grab the .AppImage from the latest release, then make it executable</span>
-chmod +x Copperline-0.9.0-x86_64.AppImage
+chmod +x Copperline-<span class="relver">0.9.0</span>-x86_64.AppImage
 
 <span class="c-comment"># run it - the bundled AROS ROM means no Kickstart is required</span>
-./Copperline-0.9.0-x86_64.AppImage
+./Copperline-<span class="relver">0.9.0</span>-x86_64.AppImage
 
 <span class="c-comment"># or boot your own Kickstart ROM, or a config file</span>
-./Copperline-0.9.0-x86_64.AppImage path/to/kickstart.rom
-./Copperline-0.9.0-x86_64.AppImage <span class="c-flag">--config</span> copperline.toml</code></pre>
+./Copperline-<span class="relver">0.9.0</span>-x86_64.AppImage path/to/kickstart.rom
+./Copperline-<span class="relver">0.9.0</span>-x86_64.AppImage <span class="c-flag">--config</span> copperline.toml</code></pre>
           </div>
 
           <div class="codeblock" role="group" aria-label="Install with Homebrew on Linux">
@@ -541,7 +648,7 @@ brew install <span class="c-flag">--HEAD</span> copperline</code></pre>
         <div class="tab-panel" id="panel-windows" role="tabpanel" aria-labelledby="tab-windows" hidden>
           <div class="codeblock" role="group" aria-label="Run the Windows build">
             <div class="codeblock__bar"><span></span><span></span><span></span> run the windows build</div>
-            <pre><code><span class="c-comment"># download and extract Copperline-0.9.0-win-x64.zip, then from a terminal</span>
+            <pre><code><span class="c-comment"># download and extract Copperline-<span class="relver">0.9.0</span>-win-x64.zip, then from a terminal</span>
 <span class="c-comment"># with no ROM it boots the bundled AROS Kickstart replacement</span>
 copperline.exe
 copperline.exe path\to\kickstart.rom
@@ -568,6 +675,115 @@ cargo build <span class="c-flag">--release</span>
     </div>
   </section>
 
+  <hr class="copperline">
+
+  <!-- ===================== FAQ ===================== -->
+  <section id="faq" class="section">
+    <div class="section__head">
+      <span class="kicker">// faq</span>
+      <h2>Questions people actually ask</h2>
+    </div>
+
+    <div class="faq">
+      <details class="faq__item">
+        <summary>Do I need a Kickstart ROM?</summary>
+        <div class="faq__body">
+          <p>No. Every build bundles the open-source AROS boot ROM, so Copperline starts
+             into a working machine out of the box. Most commercial games and Workbench
+             still want a real Kickstart, though - use one dumped from your own Amiga, or
+             a licensed copy (Cloanto's Amiga Forever is the usual route). Copperline
+             does not ship Commodore ROMs and never will.</p>
+        </div>
+      </details>
+
+      <details class="faq__item">
+        <summary>Why isn't the macOS build notarized?</summary>
+        <div class="faq__body">
+          <p>Copperline is a free-time project and I don't keep a paid Apple Developer
+             subscription for it. The .dmg is ad-hoc signed, so macOS asks you to approve
+             the first launch under Privacy &amp; Security - once, then never again.</p>
+          <p>If you'd rather not click through that at all, the Homebrew tap builds from
+             source on your machine, so Gatekeeper never gets involved.</p>
+        </div>
+      </details>
+
+      <details class="faq__item">
+        <summary>How does Copperline relate to WinUAE, FS-UAE or vAmiga?</summary>
+        <div class="faq__body">
+          <p>They are mature emulators with decades of compatibility work behind them,
+             and if you just want to play Amiga games today, they are the safer pick.
+             I cross-check Copperline's chip-bus timing against real hardware and other
+             emulators with a bootable test disk, so I say this with some affection.</p>
+          <p>Copperline's angle is the deterministic core and the tooling built on top
+             of it - the reverse debugger, the frame analyzer, headless scripting - plus
+             being a single from-scratch Rust codebase you can read end to end.</p>
+        </div>
+      </details>
+
+      <details class="faq__item">
+        <summary>Will my game or demo run?</summary>
+        <div class="faq__body">
+          <p>Maybe - and it gets more likely every release. A growing timing-sensitive
+             regression set runs at real speed, and fixes always target the underlying
+             hardware behaviour rather than patching individual titles. But compatibility
+             is still behind the mature emulators, and some things will break.</p>
+          <p>When something does, an issue with a <code>.clscript</code> recording
+             attached is gold: it replays byte-identically, so I can watch exactly what
+             you saw and step the machine backwards from the moment it went wrong.</p>
+        </div>
+      </details>
+
+      <details class="faq__item">
+        <summary>Is it true this was built with AI?</summary>
+        <div class="faq__body">
+          <p>Yes, openly. Copperline began partly as an experiment in whether an AI agent
+             could investigate emulator bugs on its own from screenshots and debug output,
+             and its development is AI-driven - directed by me, and grounded in books, my
+             own knowledge of Amiga internals, and test disks I run on real hardware.</p>
+          <p>Judge the result the way any emulator should be judged: named regression
+             tests, cycle counts validated against published test suites, cross-checks
+             against real machines, and public code.</p>
+        </div>
+      </details>
+
+      <details class="faq__item">
+        <summary>Where does the name come from?</summary>
+        <div class="faq__body">
+          <p>The Copper - the Amiga co-processor that executes a program locked to the
+             display beam - and the copper raster bars it painted across a thousand
+             demos. For an emulator whose whole design hangs off the colour clock, it
+             felt right.</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <hr class="copperline">
+
+  <!-- ===================== ABOUT ===================== -->
+  <section id="about" class="section">
+    <div class="about">
+      <span class="kicker">// a note from the author</span>
+      <h2>Why Copperline exists</h2>
+      <p>Copperline started as a two-part experiment: could I build an Amiga emulator
+         that is easy to drive from the command line, and could I give it the tooling to
+         feed debugging data and screenshots back to an AI agent, so a bug could be
+         investigated from nothing but a timestamp or a snapshot? The first milestone was
+         getting DiagROM to boot far enough to show its menu.</p>
+      <p>It didn't stay small. The features I care most about are the ones I kept
+         wishing for while chasing timing bugs: a debugger that steps backwards, an
+         analyzer that shows who owned every cycle of the chip bus, replays that always
+         reproduce. Everything else on this page grew around that core.</p>
+      <p>When I'm not writing Rust, I'm usually elbow-deep in the real machines -
+         collecting, repairing and designing hardware for them. That is where
+         Copperline's real-hardware timing references come from, and probably why I
+         care so much that the emulated machine earns its cycle counts.</p>
+      <p class="about__sig">- Andrew Hutchings (LinuxJedi) &middot;
+         <a href="https://linuxjedi.co.uk" target="_blank" rel="noopener">linuxjedi.co.uk</a> &middot;
+         <a href="https://github.com/LinuxJedi" target="_blank" rel="noopener">GitHub</a></p>
+    </div>
+  </section>
+
 </main>
 
 <footer class="footer">
@@ -584,8 +800,14 @@ cargo build <span class="c-flag">--release</span>
         independent, unofficial project and is not affiliated with, sponsored by, or
         endorsed by any trademark holder.
       </p>
+      <p class="footer__colophon">
+        This site is hand-written HTML and CSS. No trackers, no analytics, no cookies,
+        no CDNs - even the fonts are served from here.
+      </p>
     </div>
     <nav class="footer__links">
+      <a href="news/">News</a>
+      <a href="news/feed.xml">RSS</a>
       <a href="https://github.com/LinuxJedi/Copperline" target="_blank" rel="noopener">GitHub</a>
       <a href="https://github.com/LinuxJedi/Copperline/releases/latest" target="_blank" rel="noopener">Releases</a>
       <a href="https://github.com/LinuxJedi/Copperline/tree/main/docs" target="_blank" rel="noopener">Docs</a>
@@ -634,6 +856,23 @@ cargo build <span class="c-flag">--release</span>
     }
     var match = tabs.filter(function (t) { return t.getAttribute('data-os') === os; })[0];
     if (match) selectTab(match, false);
+  })();
+
+  // Keep the release version in the download snippets current. The static
+  // text is the fallback: if this fetch fails, the page still shows the
+  // version it was published with.
+  (function () {
+    var vers = document.querySelectorAll('.relver');
+    if (!vers.length || !window.fetch) return;
+    fetch('https://api.github.com/repos/LinuxJedi/Copperline/releases/latest')
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (rel) {
+        if (!rel || !rel.tag_name) return;
+        var v = String(rel.tag_name).replace(/^v/, '');
+        if (!/^\d+\.\d+(\.\d+)?$/.test(v)) return;
+        Array.prototype.forEach.call(vers, function (el) { el.textContent = v; });
+      })
+      .catch(function () {});
   })();
 </script>
 

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>Copperline News</title>
+  <link>https://copperline.dev/news/</link>
+  <description>Release write-ups and development notes for Copperline, a cycle-driven Amiga emulator written in Rust.</description>
+  <language>en</language>
+  <atom:link href="https://copperline.dev/news/feed.xml" rel="self" type="application/rss+xml"/>
+
+  <item>
+    <title>Copperline 0.9.0: the FPU deep-dive</title>
+    <link>https://copperline.dev/news/copperline-0-9-0.html</link>
+    <guid>https://copperline.dev/news/copperline-0-9-0.html</guid>
+    <pubDate>Mon, 29 Jun 2026 06:45:57 +0000</pubDate>
+    <description>An 80-bit 68881/68882 accuracy pass with pure-Rust softfloat, explicit joystick input selection, save states that restore without the original ROM, and the usual round of CIA, Paula, keyboard and display-timing fixes.</description>
+  </item>
+
+  <item>
+    <title>Copperline 0.8.0</title>
+    <link>https://github.com/LinuxJedi/Copperline/releases/tag/v0.8.0</link>
+    <guid>https://github.com/LinuxJedi/Copperline/releases/tag/v0.8.0</guid>
+    <pubDate>Sat, 27 Jun 2026 09:17:08 +0000</pubDate>
+    <description>The no-config machine launcher, external WASM Zorro board plugins, A2065 Ethernet with a loopback backend, and a long list of sprite, Denise and bitplane timing fixes.</description>
+  </item>
+
+  <item>
+    <title>Copperline 0.7.0</title>
+    <link>https://github.com/LinuxJedi/Copperline/releases/tag/v0.7.0</link>
+    <guid>https://github.com/LinuxJedi/Copperline/releases/tag/v0.7.0</guid>
+    <pubDate>Thu, 25 Jun 2026 06:40:37 +0000</pubDate>
+    <description>Expanded machine profiles, conditional and counted breakpoints, warp-speed frame skipping, and the first macOS .dmg release builds.</description>
+  </item>
+
+</channel>
+</rss>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>News - Copperline</title>
+<meta name="description" content="Release write-ups and development notes for Copperline, a cycle-driven Amiga emulator written in Rust.">
+<meta name="theme-color" content="#0a0d16">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Copperline News">
+<meta property="og:description" content="Release write-ups and development notes for Copperline, a cycle-driven Amiga emulator written in Rust.">
+<meta property="og:url" content="https://copperline.dev/news/">
+<meta property="og:image" content="https://copperline.dev/assets/shot-aga.png">
+
+<link rel="icon" href="../favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="../favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="alternate" type="application/rss+xml" title="Copperline News" href="https://copperline.dev/news/feed.xml">
+
+<link rel="preload" href="../assets/fonts/ibm-plex-sans-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/chakra-petch-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/ibm-plex-mono-400.woff2" as="font" type="font/woff2" crossorigin>
+
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div class="scanlines" aria-hidden="true"></div>
+
+<header class="nav">
+  <a class="nav__brand" href="../">
+    <img src="../assets/copperline-icon.png" alt="" width="34" height="34">
+    <span>Copperline</span>
+  </a>
+  <nav class="nav__links">
+    <a href="../">Home</a>
+    <a href="feed.xml">RSS</a>
+    <a href="../#download">Download</a>
+    <a class="nav__gh" href="https://github.com/LinuxJedi/Copperline" target="_blank" rel="noopener">GitHub</a>
+  </nav>
+</header>
+
+<main>
+  <section class="section">
+    <div class="section__head">
+      <span class="kicker">// news</span>
+      <h2>Release write-ups &amp; development notes</h2>
+      <p>What changed and why, written by a person rather than generated from a
+         changelog. There is an <a href="feed.xml">RSS feed</a> if you would like these
+         the old-fashioned way.</p>
+    </div>
+
+    <ul class="news-list">
+      <li class="news-list__item">
+        <span class="news-list__date">29 June 2026</span>
+        <h2><a href="copperline-0-9-0.html">Copperline 0.9.0: the FPU deep-dive</a></h2>
+        <p>An 80-bit 68881/68882 accuracy pass with pure-Rust softfloat, explicit
+           joystick input selection, save states that restore without the original ROM,
+           and the usual round of CIA, Paula, keyboard and display-timing fixes.</p>
+        <a class="news-list__more" href="copperline-0-9-0.html">read the write-up &gt;</a>
+      </li>
+
+      <li class="news-list__item">
+        <span class="news-list__date">27 June 2026</span>
+        <h2><a href="https://github.com/LinuxJedi/Copperline/releases/tag/v0.8.0" target="_blank" rel="noopener">Copperline 0.8.0</a></h2>
+        <p>The no-config machine launcher, external WASM Zorro board plugins, A2065
+           Ethernet with a loopback backend, and a long list of sprite, Denise and
+           bitplane timing fixes.</p>
+        <a class="news-list__more" href="https://github.com/LinuxJedi/Copperline/releases/tag/v0.8.0" target="_blank" rel="noopener">release notes on GitHub &gt;</a>
+      </li>
+
+      <li class="news-list__item">
+        <span class="news-list__date">25 June 2026</span>
+        <h2><a href="https://github.com/LinuxJedi/Copperline/releases/tag/v0.7.0" target="_blank" rel="noopener">Copperline 0.7.0</a></h2>
+        <p>Expanded machine profiles (A500 Rev 6A, A500OCS, A500+, A1000), conditional
+           and counted breakpoints, warp-speed frame skipping, and the first macOS
+           .dmg release builds.</p>
+        <a class="news-list__more" href="https://github.com/LinuxJedi/Copperline/releases/tag/v0.7.0" target="_blank" rel="noopener">release notes on GitHub &gt;</a>
+      </li>
+    </ul>
+
+    <p class="news-foot">Earlier releases live on the
+       <a href="https://github.com/LinuxJedi/Copperline/releases" target="_blank" rel="noopener">GitHub releases page</a>.
+       Full write-ups start at 0.9.0; from here on, every release gets one.</p>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="footer__inner">
+    <img src="../assets/copperline-icon.png" alt="" width="40" height="40" class="footer__icon">
+    <div class="footer__cols">
+      <p class="footer__lic">
+        Copperline is free software under the
+        <a href="https://github.com/LinuxJedi/Copperline/blob/main/LICENSE" target="_blank" rel="noopener">GNU GPL v3</a>.
+      </p>
+      <p class="footer__colophon">
+        This site is hand-written HTML and CSS. No trackers, no analytics, no cookies,
+        no CDNs - even the fonts are served from here.
+      </p>
+    </div>
+    <nav class="footer__links">
+      <a href="feed.xml">RSS</a>
+      <a href="https://github.com/LinuxJedi/Copperline" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/LinuxJedi/Copperline/releases/latest" target="_blank" rel="noopener">Releases</a>
+    </nav>
+  </div>
+</footer>
+
+</body>
+</html>
