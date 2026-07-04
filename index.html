@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Copperline - A cycle-driven Amiga emulator</title>
-<meta name="description" content="Copperline is a cycle-driven Amiga emulator (OCS / ECS / AGA) written in Rust. It models the hardware - chip bus, Copper, blitter, Paula, CIA - per colour clock, and runs timing-sensitive demos and games at real speed.">
+<meta name="description" content="Copperline is a cycle-driven Amiga emulator (OCS / ECS / AGA) written in Rust, with a reverse-stepping debugger, a chip-bus frame analyzer, deterministic record and replay, and headless scripting.">
 <meta name="theme-color" content="#0a0d16">
 
 <!-- Open Graph -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="Copperline - A cycle-driven Amiga emulator">
-<meta property="og:description" content="A cycle-driven Amiga emulator (OCS / ECS / AGA) in Rust. Hardware modelled per colour clock; demos and games at real speed.">
+<meta property="og:description" content="A cycle-driven Amiga emulator (OCS / ECS / AGA) in Rust, with a reverse debugger, a chip-bus frame analyzer and deterministic replay.">
 <meta property="og:url" content="https://copperline.dev/">
 <meta property="og:image" content="https://copperline.dev/assets/shot-aga.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -62,10 +62,9 @@
         <img src="assets/copperline-logo.png" alt="Copperline">
       </h1>
       <p class="hero__tag reveal" style="--d:2">
-        An Amiga emulator that models the <strong>hardware</strong>, not individual titles.
-        The chip bus is arbitrated per colour clock; the Copper and blitter are scheduled
-        per DMA slot; 68000 interrupt latency is modelled. Timing-sensitive demos and games
-        run at real speed.
+        An Amiga emulator with a colour-clock timing core and the tools to look inside it:
+        a debugger that steps <strong>backwards</strong>, a chip-bus frame analyzer, and
+        byte-identical record and replay.
       </p>
       <div class="hero__cta reveal" style="--d:3">
         <a class="btn btn--primary" href="#download">
@@ -89,9 +88,9 @@
   <section id="features" class="section">
     <div class="section__head">
       <span class="kicker">// features</span>
-      <h2>Modelled, not faked</h2>
-      <p>Compatibility problems are fixed by modelling the 68000, Agnus, Denise, Paula, CIA,
-         floppy and timing - never by branching on a title's name.</p>
+      <h2>What's in the box</h2>
+      <p>The 68000, Agnus, Denise, Paula, the CIAs and the floppy, all scheduled against
+         a single colour-clock timeline.</p>
     </div>
 
     <div class="grid">
@@ -155,7 +154,7 @@
 
       <article class="card">
         <span class="card__tag">presentation</span>
-        <h3>A CRT, not a flat grid</h3>
+        <h3>CRT presentation</h3>
         <p>Optional phosphor persistence, a motion-adaptive deinterlacer for laced screens,
            and tv / full overscan. The woven field is presented at a TV-like 4:3, the way
            the hardware drove a real monitor.</p>
@@ -317,8 +316,7 @@
       <h2>Watch the chip bus, cycle by cycle</h2>
       <p>Pause the machine and open the chip-bus frame analyzer. It paints one
          captured frame as the full raster - x is hpos in colour clocks, y is the beam line -
-         with every cycle coloured by the bus master that owned it. The contention the rest of
-         this page describes becomes something you can see.</p>
+         with every cycle coloured by the bus master that owned it.</p>
     </div>
 
     <div class="analyzer">
@@ -334,8 +332,7 @@
         <h3>Every colour clock has an owner</h3>
         <p>Refresh, bitplane, sprite, disk and audio DMA, the Copper, the blitter and the CPU
            all compete for one chip bus. The analyzer tallies who won every slot across the
-           frame, so a dropped line or a blit that starves the CPU shows up as a shape, not a
-           hunch.</p>
+           frame, so a dropped line or a blit that starves the CPU is visible directly.</p>
         <p>It breaks out blitter grant against wait - the cycles the blitter held the bus
            versus the cycles it stalled behind higher-priority DMA - and you can click any
            cycle to read back its line, hpos and owner.</p>
@@ -370,11 +367,11 @@
   <section id="headless" class="section">
     <div class="section__head">
       <span class="kicker">// headless &amp; deterministic</span>
-      <h2>Scriptable, and reproducible by construction</h2>
+      <h2>Scriptable and reproducible</h2>
       <p>The core is deterministic and independent of the host: a windowless, unthrottled
          run produces the <em>same</em> emulated result as a real-time windowed one, given the
-         same inputs and media. Captures reproduce by construction - which is also what lets
-         the debugger step backwards.</p>
+         same inputs and media. That determinism is what makes captures reproducible, and it
+         is also what lets the debugger step backwards.</p>
     </div>
 
     <div class="headless">
