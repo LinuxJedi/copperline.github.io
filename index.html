@@ -62,9 +62,10 @@
         <img src="assets/copperline-logo.png" alt="Copperline">
       </h1>
       <p class="hero__tag reveal" style="--d:2">
-        An Amiga emulator with a colour-clock timing core and the tools to look inside it:
-        a debugger that steps <strong>backwards</strong>, a chip-bus frame analyzer, and
-        byte-identical record and replay.
+        Cycle-driven means the whole machine advances on one colour-clock timeline -
+        CPU, DMA, Copper, blitter, all of it. Built around that core: a debugger that
+        steps <strong>backwards</strong>, a chip-bus frame analyzer, and byte-identical
+        record and replay.
       </p>
       <div class="hero__cta reveal" style="--d:3">
         <a class="btn btn--primary" href="#download">
@@ -90,7 +91,9 @@
       <span class="kicker">// features</span>
       <h2>What's in the box</h2>
       <p>The 68000, Agnus, Denise, Paula, the CIAs and the floppy, all scheduled against
-         a single colour-clock timeline.</p>
+         a single colour-clock timeline. 68000 cycle counts are validated against the
+         TomHarte SingleStepTests, and chip-bus timing against a test disk cross-checked
+         on real hardware and the vAmigaTS suite.</p>
     </div>
 
     <div class="grid">
@@ -122,7 +125,7 @@
 
       <article class="card">
         <span class="card__tag">peripherals</span>
-        <h3>Real I/O paths</h3>
+        <h3>Input &amp; audio</h3>
         <p>A bit-timed keyboard (6500/1 MCU), mouse, USB gamepad (pure-Rust gilrs, no
            SDL2), and 4-channel Paula audio with the LED filter.</p>
       </article>
