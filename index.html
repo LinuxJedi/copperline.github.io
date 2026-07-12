@@ -79,10 +79,10 @@
         </a>
       </div>
       <p class="hero__release reveal" style="--d:4">
-        <a href="news/copperline-0-9-0.html">0.9.0 is out &middot; read what's new</a>
+        <a href="news/copperline-0-11-0.html">0.11.0 is out &middot; read what's new</a>
       </p>
       <ul class="hero__chips reveal" style="--d:5" aria-label="Supported hardware">
-        <li>68000 - 68040</li><li>OCS</li><li>ECS</li><li>AGA</li>
+        <li>68000 - 68060</li><li>OCS</li><li>ECS</li><li>AGA</li>
         <li>A1000 - A1200</li><li>CDTV</li><li>CD32</li><li>HAM8</li>
       </ul>
     </div>
@@ -155,26 +155,30 @@
 
       <article class="card">
         <span class="card__tag">cpu</span>
-        <h3>68000 through 68040</h3>
-        <p>Selectable 68000 / 68EC020 / 68020 / 68030 / 68040 and clock, accurate 68000
-           cycle counts, optional on-chip caches, and an 80-bit 68881 / 68882 FPU
-           (default-on for the 040) with pure-Rust softfloat transcendentals and
-           packed-decimal reals.</p>
+        <h3>68000 through 68060</h3>
+        <p>Selectable 68000 / 68EC020 / 68020 / 68030 / 68040 / 68060 and clock, accurate
+           68000 cycle counts, the 68030 / 68040 / 68060 MMUs, on-chip caches (on by
+           default where the silicon had them), 68060 superscalar dual-issue with its
+           branch cache, and an 80-bit 68881 / 68882 FPU with pure-Rust softfloat
+           transcendentals and packed-decimal reals.</p>
       </article>
 
       <article class="card">
         <span class="card__tag">peripherals</span>
         <h3>Input &amp; audio</h3>
         <p>A bit-timed keyboard (6500/1 MCU), mouse, USB gamepad (pure-Rust gilrs, no
-           SDL2), and 4-channel Paula audio with the LED filter.</p>
+           SDL2), and 4-channel Paula audio with the LED filter, selectable host output
+           device and mono / stereo shaping - plus Paula's serial port bridged to host
+           MIDI or TCP.</p>
       </article>
 
       <article class="card">
         <span class="card__tag">storage</span>
         <h3>Disks, drives &amp; expansion</h3>
-        <p>Up to four floppies (ADF / ADZ / DMS / SCP) with multi-disk swap playlists, Gayle
-           IDE and an A2091 SCSI board carrying up to seven drives, CDTV and CD32 CD-ROM,
-           Zorro II / III autoconfig, and a host folder mounted as a bootable hard disk.</p>
+        <p>Up to four floppies (ADF / ADZ / DMS / SCP, plain or zipped) with multi-disk
+           swap playlists, Gayle IDE and A2091 / A4091 SCSI boards carrying up to seven
+           drives, CDTV and CD32 CD-ROM, Zorro II / III autoconfig, and host directories
+           mounted as live AmigaDOS volumes - bootable ones included.</p>
       </article>
 
       <article class="card">
@@ -205,9 +209,10 @@
       <article class="card">
         <span class="card__tag">tooling</span>
         <h3>Deterministic by design</h3>
-        <p>An in-window debugger that steps <strong>backwards</strong>, a chip-bus frame
-           analyzer, deterministic save states, input recording / replay, and headless
-           screenshot &amp; frame-dump capture. Every replay is byte-identical.</p>
+        <p>An in-window debugger that steps <strong>backwards</strong>, a GDB-flavoured
+           console, a chip-bus frame analyzer, deterministic save states, input
+           recording / replay, and headless screenshot &amp; frame-dump capture. Every
+           replay is byte-identical.</p>
       </article>
     </div>
   </section>
@@ -305,9 +310,10 @@
       <span class="kicker">// debugger</span>
       <h2>A debugger that runs time backwards</h2>
       <p>Press <kbd>Cmd</kbd>+<kbd>B</kbd> to pause and open the in-window debugger:
-         a live 68000 disassembly, the custom-chip state decoded bit by bit, the Copper
-         list, a hex dump, and breakpoints / watchpoints. Then step the machine
-         <em>backwards</em>.</p>
+         eight tabs covering the CPU, the chipset, the Copper, the display pipeline,
+         Paula audio, memory, the IO map and breakpoints - with a GDB-flavoured
+         console (<kbd>Cmd</kbd>+<kbd>K</kbd>) in its own window alongside. Then step
+         the machine <em>backwards</em>.</p>
     </div>
 
     <div class="debugger">
@@ -343,10 +349,20 @@
     <ul class="dbg-tabs" aria-label="Debugger tabs">
       <li><span class="dbg-tabs__name">CPU</span> Registers you can poke, decoded SR flags, and a live disassembly that follows the PC.</li>
       <li><span class="dbg-tabs__name">Chipset</span> DMACON / INTENA / INTREQ, Copper state, the display window and every pointer, decoded bit by bit.</li>
-      <li><span class="dbg-tabs__name">Copper</span> The Copper list disassembled from COP1LC, with the current fetch highlighted.</li>
-      <li><span class="dbg-tabs__name">Memory</span> A hex / ASCII dump you can page, jump to any address, or poke a byte in place.</li>
+      <li><span class="dbg-tabs__name">Copper</span> The Copper list disassembled around the live Copper PC - with Copper breakpoints and single-stepping.</li>
+      <li><span class="dbg-tabs__name">Video</span> Layer isolation - hide individual bitplanes and sprites in the picture without touching the emulation - plus per-sprite decode and the palette.</li>
+      <li><span class="dbg-tabs__name">Audio</span> Paula's four channels with their DMA state machines decoded, a mute button and a live scope per channel, CD-DA included.</li>
+      <li><span class="dbg-tabs__name">Memory</span> A hex / ASCII dump you can page, search, dump to a file, poke in place - or ask which instruction last wrote a word.</li>
+      <li><span class="dbg-tabs__name">IO Map</span> Every custom-bank register with its live value, and the selected register's bits decoded by name.</li>
       <li><span class="dbg-tabs__name">Break</span> Conditional, counted PC breakpoints plus memory and chipset-register watchpoints, whichever bus master writes.</li>
     </ul>
+
+    <figure class="shot shot--feature">
+      <img src="assets/shot-audio.png" alt="The Copperline debugger on the Audio tab, showing Paula's four audio channels with decoded DMA state, latches and pointers, per-channel mute buttons and oscilloscopes, and a CD-DA row" loading="lazy">
+      <figcaption><strong>The Audio tab.</strong> Paula's four channels with their DMA
+         state machines decoded, per-channel mutes and live scopes - and a fifth row
+         for CD-DA.</figcaption>
+    </figure>
   </section>
 
   <hr class="copperline">
@@ -474,6 +490,9 @@ copperline game.adf <span class="c-flag">--script</span> run.clscript <span clas
       <li>Floppy DMA</li>
       <li>Gayle IDE</li>
       <li>A2091 SCSI</li>
+      <li>A4091 SCSI</li>
+      <li>030 / 040 / 060 MMU</li>
+      <li>HOSTFS volumes</li>
       <li>Zorro II / III autoconfig</li>
       <li>A2065 Ethernet</li>
       <li>WASM Zorro plugins</li>
@@ -488,11 +507,13 @@ copperline game.adf <span class="c-flag">--script</span> run.clscript <span clas
     </ul>
 
     <p class="hardware__note">
-      A vendored pure-Rust <a href="https://github.com/LinuxJedi/Copperline/tree/main/vendor/m68k" target="_blank" rel="noopener">m68k</a>
+      A vendored pure-Rust <a href="https://github.com/LinuxJedi/Copperline/tree/main/crates/m68k" target="_blank" rel="noopener">m68k</a>
       core drives the CPU, with 68000 cycle counts validated against the TomHarte
       SingleStepTests to within about a percent. A bootable timing-test disk cross-checks
-      chip-bus timing against real hardware and other emulators, and the vAmigaTS suite runs
-      as a compatibility regression. The detailed architecture and timing model live in the
+      chip-bus timing against real hardware and other emulators, a golden-render probe
+      suite compares chipset timing output pixel-for-pixel on every CI run, and the
+      vAmigaTS suite runs as a compatibility regression. The detailed architecture and
+      timing model live in the
       <a href="https://github.com/LinuxJedi/Copperline/tree/main/docs" target="_blank" rel="noopener">internals docs</a>.
     </p>
   </section>
@@ -515,13 +536,14 @@ copperline game.adf <span class="c-flag">--script</span> run.clscript <span clas
         <ul>
           <li>The OCS / ECS / AGA display path, HAM8 included, replayed by beam position.</li>
           <li>Timing-sensitive OCS and AGA demos from the regression set, at real speed.</li>
-          <li>68000 - 68040 with the 68881 / 68882 FPU; 68000 cycle counts validated
-              against the SingleStepTests.</li>
+          <li>68000 - 68060 with the 68881 / 68882 FPU and the 030 / 040 / 060 MMUs;
+              68000 cycle counts validated against the SingleStepTests.</li>
           <li>The deterministic core: byte-identical replays, save states, and the
               reverse debugger built on them.</li>
           <li>The tooling - debugger, frame analyzer, headless scripting - which is
               half the point of the project.</li>
-          <li>Floppies (ADF / ADZ / DMS / SCP), Gayle IDE, A2091 SCSI, CDTV / CD32 CD.</li>
+          <li>Floppies (ADF / ADZ / DMS / SCP, plain or zipped), Gayle IDE,
+              A2091 / A4091 SCSI, CDTV / CD32 CD.</li>
         </ul>
       </div>
 
@@ -530,8 +552,9 @@ copperline game.adf <span class="c-flag">--script</span> run.clscript <span clas
         <ul>
           <li>Developed and tested on macOS. The Linux and Windows builds are produced
               by CI and get far less real-world exercise.</li>
-          <li>Host-folder hard disks are session-only: the Amiga can write to them, but
-              the changes are not written back to your host folder.</li>
+          <li>Host directories mount - and boot - as live HOSTFS volumes, but read-only
+              for now. The IDE / SCSI directory route is writable but session-only:
+              changes are not written back to your host folder.</li>
           <li>A2065 Ethernet ships with a loopback backend only - real host networking
               backends are still on the list.</li>
           <li>CD images are CUE/BIN only; plain .iso is not read yet.</li>
@@ -553,15 +576,13 @@ copperline game.adf <span class="c-flag">--script</span> run.clscript <span clas
     </div>
 
     <div class="status-next">
-      <span class="card__tag">// already merged for the next release</span>
-      <p>Development happens in the open, and <code>main</code> is well ahead of the
-         release you can download: 68060 support (superscalar dual-issue, branch cache),
-         the 68030 / 68040 PMMU, a GDB-flavoured debugger console, new Video, Audio and
-         IO-map debugger tabs, Copper breakpoints and beam traps, beam scrubbing in the
-         frame analyzer, MIDI out of Paula's serial port, and zipped floppy images -
-         those last two arrived as community pull requests.</p>
-      <p>The write-up lands on the <a href="news/">news page</a> when it ships. If you
-         can't wait, <code>brew install --HEAD copperline</code> builds main today.</p>
+      <span class="card__tag">// main vs the release</span>
+      <p>Development happens in the open, and <code>main</code> usually runs well ahead
+         of the release you can download. Right now it doesn't: 0.11.0 has just shipped,
+         so for once the release and main are the same machine.</p>
+      <p>Every release gets a write-up on the <a href="news/">news page</a> when it
+         ships. If you want to follow development commit by commit,
+         <code>brew install --HEAD copperline</code> builds main today.</p>
     </div>
   </section>
 
@@ -601,7 +622,7 @@ copperline game.adf <span class="c-flag">--script</span> run.clscript <span clas
         <div class="tab-panel" id="panel-macos" role="tabpanel" aria-labelledby="tab-macos">
           <div class="codeblock" role="group" aria-label="Run the macOS .dmg">
             <div class="codeblock__bar"><span></span><span></span><span></span> run the macos .dmg</div>
-            <pre><code><span class="c-comment"># open Copperline-<span class="relver">0.9.0</span>-macos-universal.dmg and drag</span>
+            <pre><code><span class="c-comment"># open Copperline-<span class="relver">0.11.0</span>-macos-universal.dmg and drag</span>
 <span class="c-comment"># Copperline.app into your Applications folder, then launch it</span>
 
 <span class="c-comment"># the build is not notarized, so macOS blocks the first launch.</span>
@@ -624,14 +645,14 @@ brew install <span class="c-flag">--HEAD</span> copperline</code></pre>
           <div class="codeblock" role="group" aria-label="Run the Linux AppImage">
             <div class="codeblock__bar"><span></span><span></span><span></span> run the appimage</div>
             <pre><code><span class="c-comment"># grab the .AppImage from the latest release, then make it executable</span>
-chmod +x Copperline-<span class="relver">0.9.0</span>-x86_64.AppImage
+chmod +x Copperline-<span class="relver">0.11.0</span>-x86_64.AppImage
 
 <span class="c-comment"># run it - the bundled AROS ROM means no Kickstart is required</span>
-./Copperline-<span class="relver">0.9.0</span>-x86_64.AppImage
+./Copperline-<span class="relver">0.11.0</span>-x86_64.AppImage
 
 <span class="c-comment"># or boot your own Kickstart ROM, or a config file</span>
-./Copperline-<span class="relver">0.9.0</span>-x86_64.AppImage path/to/kickstart.rom
-./Copperline-<span class="relver">0.9.0</span>-x86_64.AppImage <span class="c-flag">--config</span> copperline.toml</code></pre>
+./Copperline-<span class="relver">0.11.0</span>-x86_64.AppImage path/to/kickstart.rom
+./Copperline-<span class="relver">0.11.0</span>-x86_64.AppImage <span class="c-flag">--config</span> copperline.toml</code></pre>
           </div>
 
           <div class="codeblock" role="group" aria-label="Install with Homebrew on Linux">
@@ -648,7 +669,7 @@ brew install <span class="c-flag">--HEAD</span> copperline</code></pre>
         <div class="tab-panel" id="panel-windows" role="tabpanel" aria-labelledby="tab-windows" hidden>
           <div class="codeblock" role="group" aria-label="Run the Windows build">
             <div class="codeblock__bar"><span></span><span></span><span></span> run the windows build</div>
-            <pre><code><span class="c-comment"># download and extract Copperline-<span class="relver">0.9.0</span>-win-x64.zip, then from a terminal</span>
+            <pre><code><span class="c-comment"># download and extract Copperline-<span class="relver">0.11.0</span>-win-x64.zip, then from a terminal</span>
 <span class="c-comment"># with no ROM it boots the bundled AROS Kickstart replacement</span>
 copperline.exe
 copperline.exe path\to\kickstart.rom

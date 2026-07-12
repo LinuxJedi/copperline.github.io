@@ -8,6 +8,22 @@
   <atom:link href="https://copperline.dev/news/feed.xml" rel="self" type="application/rss+xml"/>
 
   <item>
+    <title>Copperline 0.11.0: boot from a host directory</title>
+    <link>https://copperline.dev/news/copperline-0-11-0.html</link>
+    <guid>https://copperline.dev/news/copperline-0-11-0.html</guid>
+    <pubDate>Sun, 12 Jul 2026 17:59:52 +0000</pubDate>
+    <description>Host directories mounted - and booted - as live AmigaDOS volumes, the blitter's BLTPRI bus fence, a 68000 microcode write-ordering pass, sprite serialization measured against other emulators and real hardware, and a 6x cut in worst-case frame times on slower hosts.</description>
+  </item>
+
+  <item>
+    <title>Copperline 0.10.0: the 68060, the MMUs and a much bigger debugger</title>
+    <link>https://copperline.dev/news/copperline-0-10-0.html</link>
+    <guid>https://copperline.dev/news/copperline-0-10-0.html</guid>
+    <pubDate>Tue, 07 Jul 2026 10:53:03 +0000</pubDate>
+    <description>The 68060 joins the CPU line-up, the 68030/68040 gain real MMU and cache behaviour, the debugger grows a command console plus Video, Audio and IO Map tabs, and the A4091 SCSI board, MIDI and TCP serial bridges and zipped floppies arrive.</description>
+  </item>
+
+  <item>
     <title>Copperline 0.9.0: the FPU deep-dive</title>
     <link>https://copperline.dev/news/copperline-0-9-0.html</link>
     <guid>https://copperline.dev/news/copperline-0-9-0.html</guid>
