@@ -134,6 +134,10 @@ export class WebEmu {
         return ret >>> 0;
     }
     /**
+     * Width of the presentation buffer in pixels. The captured TV aperture
+     * for standard PAL displays, the full framebuffer width otherwise; it
+     * can change between frames, so JS must size the canvas from it each
+     * frame alongside `present_rows`.
      * @returns {number}
      */
     present_width() {
