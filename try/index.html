@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Try it in your browser - Copperline</title>
+<meta name="description" content="Copperline, a cycle-driven Amiga emulator written in Rust, compiled to WebAssembly and running in your browser. Boots the open-source AROS ROM; bring your own Kickstart and disks.">
+<meta name="theme-color" content="#0a0d16">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Copperline in your browser">
+<meta property="og:description" content="The same cycle-driven Amiga emulator core, compiled to WebAssembly. Boots the open-source AROS ROM; bring your own Kickstart and disks.">
+<meta property="og:url" content="https://copperline.dev/try/">
+<meta property="og:image" content="https://copperline.dev/assets/shot-aga.png">
+
+<link rel="icon" href="../favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="../favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+
+<link rel="preload" href="../assets/fonts/ibm-plex-sans-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/chakra-petch-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/ibm-plex-mono-400.woff2" as="font" type="font/woff2" crossorigin>
+
+<link rel="stylesheet" href="../style.css">
+<style>
+  /* The emulator should be fully on screen without scrolling: trim the
+     section's hero-sized padding, keep the header to two compact lines, and
+     derive the 4:3 shell's width from the viewport height (nav + header +
+     controls need ~275px of it). */
+  .section--try {
+    padding-top: clamp(1.2rem, 2.5vh, 2rem);
+    padding-bottom: 2.5rem;
+  }
+  .try-head {
+    max-width: none;
+    margin-bottom: 1.1rem;
+    text-align: center;
+  }
+  .try-head .kicker { margin-bottom: 0.35rem; }
+  .try-head h2 {
+    font-size: clamp(1.35rem, 2.6vw, 1.9rem);
+    margin-bottom: 0;
+  }
+  .try-wrap {
+    max-width: min(920px, max(420px, calc((100vh - 275px) * 4 / 3)));
+    margin: 0 auto;
+  }
+  .try-shell {
+    position: relative;
+    background: #000;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .try-shell:fullscreen { border-radius: 0; border: none; }
+  .try-shell:fullscreen #screen { height: 100%; object-fit: contain; }
+  #screen {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    image-rendering: pixelated;
+    background: #000;
+  }
+  .try-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.1rem;
+    background: rgba(8, 11, 19, 0.78);
+    text-align: center;
+    padding: 1rem;
+  }
+  .try-status {
+    color: var(--ink-mute);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.88rem;
+  }
+  .try-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    align-items: center;
+    margin-top: 0.8rem;
+  }
+  .try-controls .btn { cursor: pointer; font-size: 0.92rem; padding: 0.55rem 1rem; }
+  .try-controls input[type="range"] { accent-color: var(--copper); width: 110px; }
+  #stat {
+    margin-left: auto;
+    color: var(--ink-mute);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+  .try-note {
+    margin: 1.2rem auto 0;
+    color: var(--ink-mute);
+    font-size: 0.92rem;
+  }
+  @media (max-width: 700px) {
+    #stat { margin-left: 0; width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="scanlines" aria-hidden="true"></div>
+
+<header class="nav">
+  <a class="nav__brand" href="../">
+    <img src="../assets/copperline-icon.png" alt="" width="34" height="34">
+    <span>Copperline</span>
+  </a>
+  <nav class="nav__links">
+    <a href="../">Home</a>
+    <a href="../docs/">Docs</a>
+    <a href="../news/">News</a>
+    <a href="../#download">Download</a>
+    <a class="nav__gh" href="https://github.com/LinuxJedi/Copperline" target="_blank" rel="noopener">GitHub</a>
+  </nav>
+</header>
+
+<main>
+  <section class="section section--try">
+    <div class="section__head try-head">
+      <span class="kicker">// try it in your browser</span>
+      <h2>Copperline, compiled to WebAssembly</h2>
+    </div>
+
+    <div class="try-wrap">
+      <div class="try-shell" id="shell">
+        <canvas id="screen" width="716" height="570"></canvas>
+        <div class="try-overlay" id="overlay">
+          <button class="btn btn--primary btn--big" id="boot" disabled>Boot AROS</button>
+          <p class="try-status" id="load-status">loading emulator&hellip;</p>
+        </div>
+      </div>
+
+      <div class="try-controls">
+        <label class="btn btn--ghost">Insert DF0&hellip;
+          <input id="df0" type="file" accept=".adf,.adz,.dms,.gz,.zip,.ipf,.scp" hidden></label>
+        <label class="btn btn--ghost">Load Kickstart&hellip;
+          <input id="kick" type="file" accept=".rom,.bin" hidden></label>
+        <button class="btn btn--ghost" id="eject">Eject</button>
+        <button class="btn btn--ghost" id="reset">Reset</button>
+        <button class="btn btn--ghost" id="fullscreen">Fullscreen</button>
+        <input id="vol" type="range" min="0" max="100" value="80" aria-label="Volume">
+        <span id="stat"></span>
+      </div>
+
+      <p class="try-note">
+        The same cycle-driven core as the desktop builds, running
+        single-threaded in your browser. It boots the bundled open-source
+        AROS ROM out of the box - no Kickstart needed - and you can load your
+        own Kickstart image and disk files with the buttons above. Everything
+        runs locally in your browser; nothing you load here is uploaded
+        anywhere. Experimental: best on a desktop browser with a keyboard.
+      </p>
+
+      <p class="try-note">
+        Click the screen to capture your mouse for relative motion (Esc releases
+        it); without capture, the pointer follows your cursor over the screen.
+        Disks are always write-protected in the browser. Kickstart ROMs are
+        copyrighted and not provided - use your own dump. The bundled AROS ROMs
+        are distributed under the <a href="aros/LICENSE">AROS Public License</a>.
+      </p>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="footer__inner">
+    <img src="../assets/copperline-icon.png" alt="" width="40" height="40" class="footer__icon">
+    <div class="footer__cols">
+      <p class="footer__lic">
+        Copperline is free software under the
+        <a href="https://github.com/LinuxJedi/Copperline/blob/main/LICENSE" target="_blank" rel="noopener">GNU GPL v3</a>.
+      </p>
+      <p class="footer__colophon">
+        This site is hand-written HTML and CSS. No trackers, no analytics, no cookies,
+        no CDNs - even the fonts and the emulator are served from here.
+      </p>
+    </div>
+    <nav class="footer__links">
+      <a href="../news/feed.xml">RSS</a>
+      <a href="https://github.com/LinuxJedi/Copperline" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/LinuxJedi/Copperline/releases/latest" target="_blank" rel="noopener">Releases</a>
+    </nav>
+  </div>
+</footer>
+
+<script type="module" src="./try.js"></script>
+</body>
+</html>
