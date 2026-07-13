@@ -168,6 +168,32 @@ export class WebEmu {
         return ret[0] >>> 0;
     }
     /**
+     * The CD32 pad's extra buttons on port 2 (red/blue arrive through
+     * `set_joystick_port2` as fire/button2).
+     * @param {boolean} play
+     * @param {boolean} rwd
+     * @param {boolean} ffw
+     * @param {boolean} green
+     * @param {boolean} yellow
+     */
+    set_cd32_buttons_port2(play, rwd, ffw, green, yellow) {
+        wasm.webemu_set_cd32_buttons_port2(this.__wbg_ptr, play, rwd, ffw, green, yellow);
+    }
+    /**
+     * Port-2 digital joystick state (the page's keyboard-joystick mapping,
+     * or a Gamepad API bridge). Marks port 2 as a joystick; `fire` is the
+     * red/primary button, `button2` the blue/second button.
+     * @param {boolean} up
+     * @param {boolean} down
+     * @param {boolean} left
+     * @param {boolean} right
+     * @param {boolean} fire
+     * @param {boolean} button2
+     */
+    set_joystick_port2(up, down, left, right, fire, button2) {
+        wasm.webemu_set_joystick_port2(this.__wbg_ptr, up, down, left, right, fire, button2);
+    }
+    /**
      * @param {number} percent
      */
     set_volume_percent(percent) {

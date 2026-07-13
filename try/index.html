@@ -145,6 +145,7 @@
           <input id="kick" type="file" accept=".rom,.bin" hidden></label>
         <button class="btn btn--ghost" id="eject">Eject</button>
         <button class="btn btn--ghost" id="reset">Reset</button>
+        <button class="btn btn--ghost" id="joy">Joystick: off</button>
         <button class="btn btn--ghost" id="fullscreen">Fullscreen</button>
         <input id="vol" type="range" min="0" max="100" value="80" aria-label="Volume">
         <span id="stat"></span>
@@ -162,6 +163,9 @@
       <p class="try-note">
         Click the screen to capture your mouse for relative motion (Esc releases
         it); without capture, the pointer follows your cursor over the screen.
+        The Joystick toggle drives port 2 from the keyboard with the same
+        mapping as the desktop app: cursor keys for directions, Right Ctrl or
+        Right Alt for fire (CD32 extras on C/X/D/S/Enter/Z/A).
         Disks are always write-protected in the browser. Kickstart ROMs are
         copyrighted and not provided - use your own dump. The bundled AROS ROMs
         are distributed under the <a href="aros/LICENSE">AROS Public License</a>.
