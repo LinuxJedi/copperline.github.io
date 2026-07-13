@@ -1,0 +1,577 @@
+# Configuration reference
+
+Copperline is configured by a TOML file: `./copperline.toml` by default, or
+any file passed with `--config`. Every field is optional; missing fields use
+the defaults documented here. `copperline.example.toml` in the repository
+root is a commented companion to this reference.
+
+The configuration is validated up front and the emulator refuses to start
+with a clear error message rather than guessing (unknown CPU or chipset
+names, out-of-range sizes, missing disk images, and so on).
+
+### Paths on Windows
+
+This applies to every path field below (`rom`, disk images, hard-drive
+files, the SCSI ROMs, and so on). In a TOML double-quoted string the
+backslash is an escape character, so a Windows path written the obvious way
+(`rom = "C:\Kickstarts\KICK31.ROM"`) is rejected: `\K` is not a valid escape.
+Use any one of:
+
+```toml
+rom = 'C:\Kickstarts\KICK31.ROM'    # single quotes: a literal string, no escaping
+rom = "C:\\Kickstarts\\KICK31.ROM"  # double quotes: backslashes doubled
+rom = "C:/Kickstarts/KICK31.ROM"    # forward slashes also work on Windows
+```
+
+Single-quoted literal strings are the least error-prone. macOS and Linux paths
+use forward slashes and need none of this.
+
+## Command-line overrides
+
+The most common machine knobs can be set on the command line without writing
+a config file. These flags layer on top of the config file (or, when there is
+none, the built-in defaults) and are validated by exactly the same parsers and
+range checks as the equivalent TOML fields:
+
+| Flag | Overrides | Accepts |
+|---|---|---|
+| `--model NAME` | `[machine] profile` | `A1000`, `A500`, `A500OCS`, `A500Plus`, `A600`, `A1200`, `CDTV`, `CD32` |
+| `--chipset NAME` | `[chipset] revision` | `OCS`, `ECS`, `AGA` |
+| `--cpu MODEL` | `[cpu] model` | `68000`, `68010`, `68EC020`, `68020`, `68030`, `68040`, `68060` |
+| `--cpu-clock MHZ` | `[cpu] clock_mhz` | a number of MHz |
+| `--fpu` / `--no-fpu` | `[cpu] fpu` | fit / omit a 68881/68882 |
+| `--chip SIZE` | `[memory] chip` | `512K`, `1M`, `2M`, ... |
+| `--fast SIZE` | `[memory] fast` | `0`, `1M`, `4M`, `8M`, ... |
+| `--slow SIZE` | `[memory] slow` | `0`, up to `512K` |
+| `--floppy-drives COUNT` | `[floppy] drives` | `1` to `4` wired drives (`DF0:` plus external drives) |
+| `--joystick MODE` | `[input] joystick` | `gamepad` (default), `keyboard` |
+
+For example, to boot a stock A1200 profile but with 8 MB of fast RAM and a
+faster CPU, with no config file at all:
+
+```sh
+./target/release/copperline --model A1200 --fast 8M --cpu-clock 28 KICK31.ROM
+```
+
+A `--model` profile supplies the chipset, CPU, and memory defaults of a real
+machine; the other flags then override individual values on top of it, just as
+explicit `[cpu]`/`[chipset]`/`[memory]` sections override a `[machine]`
+profile in a config file.
+
+## Top level
+
+```toml
+rom = "KICK13.ROM"            # Kickstart image, exactly 512 KiB
+extended_rom = "cd32ext.rom"  # optional: CDTV (256K at $F00000) or
+                              # CD32 (512K at $E00000) extended ROM
+# identify = false            # drop the Copperline identification board
+                              # from the Zorro chain (default: present)
+```
+
+`identify` controls a small, inert Zorro autoconfig board Copperline puts on
+the expansion chain (manufacturer 5192 / product 2) so guest software such
+as [identify.library](https://github.com/shred/identify) can detect that it
+is running under the emulator. It is on by default and does not change the
+machine's usable memory; set `identify = false` for a chain with no
+emulator-identifying board. See [](../zorro) for details.
+
+The ROM path can be overridden by a positional CLI argument. Omit `rom`
+entirely (and pass no ROM argument) to boot the bundled AROS open-source
+Kickstart replacement, which ships with Copperline as the default boot ROM;
+its main and extended halves are located next to the binary (under
+`share/copperline/aros` for a Homebrew install) or set
+`COPPERLINE_AROS_DIR`. You can also fit a different ROM at runtime from the
+menu's **Load Kickstart ROM...** item, which hard-resets the machine. Machine
+profiles that need an extended ROM (CDTV, CD32) will tell you if it is
+missing.
+
+## `[machine]` -- machine profiles
+
+```toml
+[machine]
+profile = "A1200" # A1000, A500, A500OCS, A500Plus (A500+), A600, A1200, CDTV, CD32
+rtc = true        # add a battery RTC (default: only A500+/CDTV ship with one)
+```
+
+A machine profile bundles the chipset, CPU, memory, gate array, and
+peripheral defaults of a real machine. The key is `profile` (the deprecated
+`model` alias still parses) so it never collides with `[cpu] model`. Explicit `[cpu]`, `[chipset]`, and
+`[memory]` sections override individual profile defaults. Without a
+`[machine]` section you get the A500 Rev 6A default (the same as the `A500`
+profile: ECS 8372A Agnus, OCS 8362 Denise, 68000, 512K chip RAM, 512K
+trapdoor slow RAM) -- the most common and most-targeted Amiga. An explicit
+`[chipset] revision` overrides the per-machine chips, so `revision = "OCS"`
+gives a plain 8371/8362 OCS machine.
+
+| Profile | Chipset | CPU | Chip RAM | Slow RAM | Extras |
+|---|---|---|---|---|---|
+| `A1000` | OCS (8361/8367 Agnus, OCS Denise) | 68000 @ 7.09 MHz | 256K | 0 | WCS, boot ROM + Kickstart disk |
+| `A500` | Rev 6A: ECS 8372A Agnus, OCS 8362 Denise | 68000 @ 7.09 MHz | 512K (up to 1M) | 512K | -- |
+| `A500OCS` | OCS (8371 Fat Agnus, OCS Denise) | 68000 @ 7.09 MHz | 512K | 512K | early A500 / A2000 |
+| `A500Plus` | ECS (8375 Agnus, ECS Denise) | 68000 @ 7.09 MHz | 1M | 0 | RTC |
+| `A600` | ECS (8375 Agnus, ECS Denise) | 68000 @ 7.09 MHz | 1M | 0 | Gayle IDE |
+| `A1200` | AGA (Alice/Lisa) | 68EC020 @ 14.18 MHz | 2M | 0 | Gayle IDE |
+| `CDTV` | ECS | 68000 @ 7.09 MHz | 1M | 0 | DMAC CD controller, RTC, 256K extended ROM |
+| `CD32` | AGA (Alice/Lisa) | 68EC020 @ 14.18 MHz | 2M | 0 | Akiko, CD32 pad, NVRAM, 512K extended ROM |
+
+`rtc` exists because most Amigas shipped without a battery-backed clock and
+only some carried one. Only the `A500Plus` (an OKI RTC soldered to the Rev 8A
+board) and `CDTV` fit one by default; the base A500/A500OCS, A600, A1200,
+A1000, and CD32 have none. Set `rtc = true` to add one -- for an A600HD or a
+clock-equipped A1200, say -- so the Workbench clock keeps time.
+
+The `A1000` profile models the original Amiga, which has no Kickstart ROM.
+Its `rom` is instead the 64K bootstrap ROM ("Amiga ROM Bootstrap"); on
+power-up the bootstrap loads Kickstart from the Kickstart disk in DF0 into
+256K of writable control store (WCS) at `$FC0000`, write-protects it, and runs
+it -- exactly as the real machine does. So an A1000 config names the bootstrap
+ROM as `rom` and puts the Kickstart disk in `[floppy.df0]`; leave it in and the
+machine boots to Kickstart (which then asks for a Workbench disk). See the
+ready-made `a1000.example.toml`.
+
+The `A500` profile models the common Rev 6A board: the ECS "Fatter" 8372A
+Agnus (a 1 MiB chip-RAM reach and the software-selectable PAL/NTSC switch via
+`BEAMCON0`) paired with the original OCS 8362 Denise. It is therefore an
+Agnus-only ECS upgrade, not a full-ECS machine -- the OCS Denise means no
+superhires or `BRDRBLNK`, exactly as on the real board. Chip RAM defaults to
+the stock 512K but accepts up to 1M (`[memory] chip = "1M"`); more than 1M is
+rejected because the 8372A cannot address it. Booting with no `[machine]`
+section uses the same Rev 6A defaults; select `A500OCS` or set
+`[chipset] revision = "OCS"` for the older 8371/8362 machine.
+
+## `[emulation]`
+
+```toml
+[emulation]
+power_on = true            # false = start powered off at the test screen
+pacing_budget = "cycles"   # "cycles" (hardware-accurate) or "instructions"
+realtime_priority = false  # true = raise the pacer/audio thread priority
+warp_speed = "max"         # turbo limit: "2x", "4x", "8x", "16x", or "max"
+```
+
+The deterministic cycle-driven core is the only emulation timing. It is
+paced to wall-clock for the interactive window and runs unthrottled for
+headless captures; the emulated result is identical. (An older `speed` key
+here is accepted but ignored -- "real" was the only timing model, so it
+carried no information.)
+
+- `power_on = false` starts the machine powered off showing a test screen
+  until you click the status-bar power button -- useful for arming video
+  capture first. The power button cold-boots (clears RAM).
+- `pacing_budget` selects how real-time pacing budgets CPU work per frame:
+  `"cycles"` (default) charges each instruction its actual 68000 cycle cost
+  plus chip-bus waits, matching real hardware speed; `"instructions"` uses a
+  flat `COPPERLINE_REAL_CPU_CPI` (default 4.0) cycles/instruction quota,
+  which is cheaper but runs the CPU faster than hardware.
+  `COPPERLINE_REAL_PACING_BUDGET` overrides this for one run. See
+  [](../internals/timing) for the full rationale.
+- `realtime_priority = true` asks the OS to schedule Copperline's two
+  latency-critical threads -- the wall-clock pacer and the audio callback --
+  above normal, which reduces frame stutter and audio glitches when the host
+  is busy. It is best effort and off by default, and never fails the run:
+  - **macOS** -- the pacer thread joins the `USER_INTERACTIVE` QoS class. The
+    audio callback is left alone because Core Audio already runs it on a
+    real-time thread (overriding that would only demote it).
+  - **Windows** -- both threads are raised via `SetThreadPriority`; no
+    privilege required.
+  - **Linux/other Unix** -- raising priority needs privilege (an `rtprio`
+    rlimit, `CAP_SYS_NICE`, or root). Without it the request is logged and
+    declined, and the thread keeps normal scheduling.
+
+  `COPPERLINE_REALTIME_PRIORITY` overrides this for one run; set it to
+  `0`/`false`/`off` to force it off, or to any other value (or leave it empty)
+  to force it on.
+- `warp_speed` sets the default speed of Warp Speed (turbo) mode. The window
+  presents with vsync, so emulating one frame per presented frame would pin
+  warp to the host monitor's refresh rate. This option is an output frame
+  skip -- `"2x"`, `"4x"`, `"8x"`, `"16x"`, or `"max"` (default) -- so warp
+  retires that many emulated frames per presented frame, making warp roughly
+  the limit times the refresh rate (host CPU permitting). `"max"` runs flat
+  out and still presents at vsync. Adjust it live from the **Warp Limit**
+  menu item or `Cmd+Shift+W` / `Alt+Shift+W` (see [The window and its
+  controls](ui.md)).
+
+## `[cpu]`
+
+```toml
+[cpu]
+model = "68000"     # 68000, 68010, 68EC020, 68020, 68030, 68040, 68060
+clock_mhz = 14.0    # optional; defaults to the model's stock speed
+# icache = false    # instruction-cache model (on by default: 020/030/040/060)
+# dcache = false    # data-cache model (on by default: 030/040/060)
+# fpu = true        # fit a 68881/68882 (68020/68030; needs the coprocessor
+#                   # interface, so not valid on a 68000). The full 68040's
+#                   # and 68060's on-die FPUs are enabled by default.
+# unimplemented = "trap"  # 68060 only: "trap" (faithful; the OS needs
+#                   # 68060.library) or "native" (execute the removed
+#                   # instructions directly)
+```
+
+- `model`: the 68010 models the vector base register, the format-stacking
+  exception model, and DBcc loop mode; the 68EC020 is a 68020 instruction
+  set with a 24-bit external address bus.
+- `clock_mhz` defaults to the model's stock speed (68000/68010 ~7.09, 020 ~14,
+  030/040 ~25, 060 50) and is modelled as a whole multiple of the colour clock
+  (3.546895 MHz). Fast RAM and ROM run at the CPU clock; chip and slow RAM
+  stay chip-bus bound, so overclocking speeds up only what a real
+  accelerator would speed up.
+- `icache`/`dcache` model the on-chip caches and default **on** for the
+  silicon that has them (instruction cache on the 020/68EC020/030/040/060,
+  data cache on the 030/040/060), matching real hardware where AmigaOS
+  enables them via CACR. The cache is sized to the CPU: 256 bytes on the
+  020/030, 4 KB on the 040, 8 KB on the 060. Set either to `false` to opt
+  out.
+- `unimplemented` (68060 only) picks what happens on the instructions the
+  68060 dropped from silicon: MOVEP, CHK2/CMP2, CAS2, misaligned CAS,
+  64-bit MUL/DIV, and most of the FPU beyond basic arithmetic
+  (transcendentals, FMOVECR, packed decimal). `"trap"` (the default) is
+  what the chip does - they raise the unimplemented-instruction exceptions
+  and the OS-side `68060.library` emulates them, exactly as on a real
+  CyberStorm or Blizzard board, so software using them needs that library
+  installed. `"native"` executes them directly for systems without it.
+  Kickstart 3.1 itself boots fine under `"trap"`. `fpu = false` on the
+  68060 models the LC/EC060: FP instructions take the FPU-disabled
+  exception (PCR.DFP), which an OS handler can also use to enable and
+  restart. The 68060's superscalar dual-issue and branch cache are
+  modelled and activate when system software enables them (PCR.ESS and
+  CACR.EBC, which `68060.library` does at boot); until then the chip runs
+  scalar, as on real silicon. This is not cosmetic: code that loops
+  out of chip RAM otherwise contends with bitplane DMA on every instruction
+  fetch and can run at roughly half speed, which is why an AGA demo's music or
+  animation may pace correctly only with the cache modelled. The data cache
+  caches expansion RAM/ROM only, since chip and slow RAM are DMA-visible and
+  cache-inhibited as on real Amigas.
+
+## `[memory]`
+
+```toml
+[memory]
+chip = "512K"   # OCS max 512K; ECS/AGA max 2M
+fast = "0"      # Zorro II fast RAM at $200000: 64K..8M board sizes
+slow = "512K"   # A500 trapdoor RAM at $C00000: 0 or up to 512K
+z3   = "0"      # Zorro III RAM (needs a 32-bit CPU): 64K..1G, power of two
+```
+
+Sizes accept `K`/`KB`/`M`/`MB` (and `G`/`GB` for Zorro III) suffixes or
+plain byte counts, and must be multiples of 4 KiB.
+
+- **Chip RAM** is range-checked against the chipset: 512K on OCS, 2M on
+  ECS/AGA (also bounded by the selected Agnus revision's address reach).
+- **Fast RAM** is exposed as a Zorro II autoconfig board at `$200000`, so
+  it must be a legal Zorro II board size: 64K, 128K, 256K, 512K, 1M, 2M,
+  4M, or 8M.
+- **Slow RAM** ($C00000 "ranger" RAM) is arbitrated on the chip bus through
+  Agnus exactly like chip RAM -- it is slow in the authentic way.
+- **Z3 RAM** requires a 68020/68030/68040/68060 (a 24-bit bus cannot reach it);
+  Kickstart assigns its base address, usually `$40000000`.
+
+Additional expansion boards can be described with `[[zorro]]` metadata
+files; see [](../zorro).
+
+## `[chipset]`
+
+```toml
+[chipset]
+revision = "OCS"   # OCS, ECS, or AGA preset
+video = "PAL"      # PAL or NTSC
+# agnus = "8372A"  # optional fine-grained override
+# denise = "OCS"   # optional fine-grained override
+```
+
+`revision` is a preset; `agnus` and `denise` allow the mixed configurations
+real machines shipped with (a late A500 with an ECS Agnus but OCS Denise,
+for example):
+
+- `agnus`: `OCS`/`8370`/`8371` (OCS), `8372`/`8372A` (ECS, 1M chip),
+  `8375`/`8372B` (ECS, 2M chip), `8374`/`ALICE` (AGA).
+- `denise`: `OCS`/`8362`, `ECS`/`8373`, `LISA`/`4203`.
+
+The ECS preset picks an 8372A for up to 1M chip RAM and an 8375 above; the
+A600 profile always uses the 8375 as the real machine did. The AGA preset
+resolves to Alice and Lisa: 8 bitplanes, the 256-entry 25-bit palette with
+BPLCON3 BANK/LOCT banking, HAM8, FMODE wide bitplane and sprite fetch
+(DMA and manual sprites), SSCAN2/BSCAN2 scan doubling, BPLCON4, and
+CLXCON2 (remaining gaps, such as true 35 ns SuperHires sprite output, are
+recorded in [](../internals/chipset)).
+
+## `[display]`
+
+```toml
+[display]
+overscan = "tv"      # "tv" (default) or "full"
+pixel_aspect = "tv"  # "tv" (default, 4:3 CRT) or "square" (exact 2x2 lo-res)
+phosphor = 0.0       # CRT persistence fraction, 0.0 (off) to 0.95
+```
+
+The emulated framebuffer always carries the full overscan field Denise
+produces. `"tv"` masks the deep horizontal overscan margins in black like a
+CRT bezel, presenting the standard PAL window plus 24 lo-res pixels per side
+of TV-style overscan while preserving vertical border colour changes. PNG
+screenshots and `--dump-frames` crop standard PAL TV output to a 692x540
+aperture for reference-emulator comparison. `"full"` shows everything, which
+is useful when debugging display alignment. `COPPERLINE_OVERSCAN=full|tv`
+overrides this for a single run.
+
+`pixel_aspect` selects how emulated scanlines map to host rows. The default
+`"tv"` presents the field with the non-square pixel aspect of a 4:3 CRT:
+the full overscan scan fills a 4:3 picture, so PAL lo-res pixels come out
+slightly wider than tall, exactly as a real TV shows them (a 320x256 screen
+spans about 640x482 window pixels). `"square"` uses one host row per woven
+scanline instead, so every low-resolution pixel is an integer 2x2 square
+and a 320x256 PAL screen occupies precisely 640x512 window pixels --
+slightly taller than a real CRT picture, but exact for side-by-side pixel
+comparison with square-pixel emulators. The menu's *Pixel Aspect* item
+flips the mode live without touching the config, and
+`COPPERLINE_PIXEL_ASPECT=tv|square` overrides it for a single run.
+
+`phosphor` blends each presented frame with a fraction of the previous
+one, approximating the exponential decay of CRT phosphor. Software that
+relies on the tube to fuse field-rate flicker -- alternate-field dither
+transparency or flicker-dithered animation -- reads as intended with values
+around `0.3`-`0.5`,
+at the cost of a slight motion trail. Off by default so screenshots and
+frame dumps stay frame-exact. `COPPERLINE_PHOSPHOR=0.4` overrides the
+config for a single run.
+
+Rendering completed frames uses a worker thread by default so emulation can
+advance while the previous frame is painted. The worker is an implementation
+detail of presentation: screenshots, frame dumps, and recordings wait for
+the exact frame they save. `COPPERLINE_THREADED_RENDER=0` forces the old
+synchronous render path for comparison.
+
+## `[audio]`
+
+```toml
+[audio]
+floppy_sounds = true        # synthesized drive sounds (not sampled)
+floppy_sounds_volume = 100  # 0-100, relative to Paula's output
+# output_device = "..."     # host output device (substring); omit = system default
+# output_enabled = true     # false = no sound (GUI "Disabled"); --audio/--noaudio still win
+channel_mode = "stereo"     # "stereo" (default) or "mono"
+stereo_separation = 100     # 0-100; 100 = hardware panning, 0 = mono
+```
+
+The drive sounds are generated from scratch: motor hum with spin-up/down,
+head-step clicks for seeks and the empty-drive poll, and faint read/write
+hiss during disk DMA. Only step pulses that actually fire the stepper are
+audible: like a real 3.5" mechanism, an outward pulse with the head at
+track 0 is gated by the /TRK0 sensor, so NoClick-style patches silence
+the empty-drive poll just as they do on real hardware.
+
+`output_device` picks the host output by a case-insensitive substring of the
+names `--list-audio-devices` prints (`--audio-device` overrides it); an omitted
+or unmatched name uses the system default. `channel_mode = "mono"` averages the
+left and right output into both channels, and `stereo_separation` narrows the
+Amiga's hardware left/right panning between full (100) and mono (0) -- so it is
+ignored when `channel_mode` is mono. `output_enabled = false` runs with no sound
+at all (the launcher and runtime-menu "Disabled" option); the `--audio` and
+`--noaudio` CLI flags still override it. These are host-output settings that do
+not change the emulated audio and are not stored in save states. The equivalent
+CLI flags are `--audio-device`, `--audio-channel-mode`, `--audio-stereo-separation`
+and `--list-audio-devices`.
+
+On Linux with PipeWire/PulseAudio, individual sinks are not ALSA devices, so
+only the `default`/`pipewire` route is offered; pick the output in the desktop
+sound settings (or route Copperline in `pavucontrol`) and it follows. macOS and
+Windows select each device directly.
+
+## `[input]`
+
+```toml
+[input]
+joystick = "gamepad"   # "gamepad" (default) or "keyboard"
+```
+
+Selects the initial host source for the emulated port-2 joystick / CD32 pad.
+There are two explicit modes, so the active source is always visible rather
+than depending on whether a pad happens to be connected:
+
+- `gamepad` (the default) -- only a physical pad drives port 2. The keyboard
+  is left to the Amiga, so it passes straight through to a Shell, an editor,
+  or Workbench, and no keys are unexpectedly captured as joystick input. With
+  no pad connected there is simply no port-2 input.
+- `keyboard` -- use the keyboard-joystick mapping (cursor keys plus the fire
+  keys), so port 2 stays usable without a controller.
+
+This only sets the starting mode. The status-bar toggle (the gamepad /
+keyboard icon next to the volume control), `Cmd+J` / `Alt+J`, the menu's
+**Joystick Input** item, and the launcher's *A/V & Emu* tab all flip it live
+without changing the config. `--joystick MODE` overrides this for a single
+run. (`auto` is still accepted here as a backward-compatibility alias for
+`gamepad`; the old auto-detect mode has been removed.)
+
+## `[floppy]` and `[floppy.df0]` .. `[floppy.df3]`
+
+```toml
+[floppy]
+drives = 2                 # DF0 and DF1 connected; default is DF0 only
+
+[floppy.df0]
+path = "demo.adf"            # single image, or:
+# paths = ["disk1.adf", "disk2.adf"]   # swap playlist (shortcut cycles)
+write_protected = true       # default true
+# enabled = true             # implied by path/paths
+```
+
+`drives` controls how many mechanisms are wired, from one to four. DF0 is
+the internal drive; DF1-DF3 are external drives that answer the standard
+Amiga external-drive ID protocol when connected. A configured disk image
+also connects that drive automatically, so existing configs that name
+`[floppy.df1]` .. `[floppy.df3]` keep working.
+
+Supported image formats: standard 901120-byte DD ADF, gzip-compressed
+images (ADZ), single file ZIP archives, DMS archives, UAE extended ADF, and
+read-only SCP flux images. DMS, gzip, and SCP images are decoded at load time
+and always treated as write-protected; set `write_protected = false` on a plain
+ADF to allow write-through updates to the image file.
+
+A `paths` playlist lets multi-disk software that only drives DF0: run
+without a second drive: the first entry is the boot disk and the disk-swap
+shortcut (`Cmd+D` on macOS, `Alt+D` on Linux/Windows) or the status-bar
+swap button cycles to the next image, wrapping around.
+
+## `[ide]` -- Gayle hard disks
+
+```toml
+[machine]
+profile = "A600"             # IDE needs a Gayle machine (A600 or A1200)
+
+[ide]
+master = "AmigaSYS.hdf"      # raw flat HDF, read/write
+# slave = "scratch.hdf"
+```
+
+Images are opened read/write. Both kinds of HDF work directly:
+
+- a full disk image with its own Rigid Disk Block (RDSK/PART chain), and
+- a bare partition hardfile (boot block starts with `DOS\x..`), which is
+  wrapped in a synthesized RDB on the fly: one extra cylinder of
+  16-surface x 32-sector geometry holding an RDSK and a bootable `DH0`
+  PART block, with the image's own dostype. The image must be a multiple
+  of 256 KiB so the partition is an exact cylinder count. Writes to the
+  partition go back to the image file; writes to the synthesized RDB area
+  (re-partitioning) live only for the session.
+
+A path may also name a **host directory**: its tree is built into an
+in-memory FFS volume at startup (volume name = directory name, files and
+subdirectories included; entries whose names cannot exist on an Amiga
+volume are skipped with a warning). The guest sees an ordinary bootable
+FFS disk and may write to it, but the volume lives only in memory --
+nothing is written back to the host directory, and changes are lost at
+exit. Note that the stock A1200/A600 Kickstart `scsi.device` only probes
+the IDE master; a slave drive needs a guest OS or driver that supports
+two units (e.g. Kickstart 3.1.4).
+
+To override the volume name (instead of inheriting the directory name),
+give the drive as a table with `path` and `name`:
+
+```toml
+[ide]
+master = { path = "/host/Games", name = "Games" }
+# slave = "scratch.hdf"        # the bare-string form still works
+```
+
+The name sets the FFS volume label of a directory mount; AmigaDOS volume
+names hold up to 30 characters and cannot contain `:` or `/`. It has no
+effect on a raw HDF, which carries its own label inside the image.
+
+The drive responds to ATA IDENTIFY with the Gayle byte order real hardware
+uses, so both Kickstart 3.1 variants boot from it. An HDD activity LED
+appears in the status bar on IDE machines.
+
+## `[scsi]` -- A2091 SCSI controller
+
+```toml
+[scsi]
+rom = "a2091-v6.6.rom"       # A590/A2091 boot ROM image (required)
+# rom_odd = "a2091-odd.rom"  # for split even/odd EPROM dumps
+unit0 = "workbench.hdf"      # SCSI IDs 0-6
+unit1 = "data.hdf"
+# unit2..unit6 = ...
+```
+
+The `[scsi]` section attaches a Commodore A2091 controller (Commodore
+DMAC + WD33C93A) as a Zorro II autoconfig board. It is the preferred way
+to mount hard disks: up to **seven drives** on one controller, on **any
+machine model** (the board needs no Gayle), and with no dependence on the
+Kickstart IDE driver -- the board's own boot ROM carries `scsi.device`
+and autoboots on Kickstart 1.3 and newer, which also sidesteps the stock
+A600/A1200 `scsi.device` only probing the IDE master. `[ide]` remains
+available, and both can be used at once.
+
+`rom` must point at an A590/A2091 boot ROM image (version 6.6 or later;
+16K/32K, available from the same vendors and dump sets as Kickstart
+ROMs). Dumps split into even/odd EPROM halves can be given as `rom`
+(even, U13) plus `rom_odd` (odd, U12). The ROM is required because the
+autoboot DiagArea and the scsi.device driver itself live in it; the
+autoconfig identity comes from the board (Commodore, product 3, DiagArea
+vector at `$2000`).
+
+Each `unitN` accepts everything `[ide]` paths do: RDB images, bare
+partition hardfiles (a synthesized RDB advertises a bootable `DHn`
+partition, named after the SCSI ID), and host directories built into
+in-memory FFS volumes -- including the `{ path = "...", name = "..." }`
+table form that overrides a directory mount's volume name. The HDD
+activity LED covers SCSI traffic too.
+
+## `[[filesys]]` -- host directories as live volumes
+
+```toml
+[[filesys]]
+path = "/data/amiga/Workbench"
+volume = "Workbench"   # optional, defaults to the directory name
+bootpri = 6            # optional boot priority; default -128 = never boot
+
+[[filesys]]
+path = "/data/amiga/downloads"
+```
+
+Each `[[filesys]]` entry exports a host directory to the guest as an
+AmigaDOS volume on its own `HOSTFS<n>:` device, served live by the
+emulator: no disk image is built, and guest reads always see the current
+host contents. This differs from giving `[ide]`/`[scsi]` a directory
+path, which snapshots the tree into an in-memory FFS volume at startup.
+Up to 16 mounts.
+
+The volumes are read-only for now: write operations fail with the same
+"disk is write-protected" error a physical write-protected disk gives.
+Protection bits, comments, and exact datestamps are taken from UAE-style
+`.uaem` sidecar files when present (the sidecars stay hidden from
+listings).
+
+`volume` sets the AmigaDOS volume name (up to 30 characters, no `:` or
+`/`). `bootpri` enters the volume in the boot-device vote (-128..127;
+the default -128 means mounted but never booted from): hard-disk boot
+partitions typically sit at priority 0 and DF0: at 5, so a bootable
+Workbench directory with `bootpri = 6` boots ahead of both.
+
+## `[cd]` -- CDTV and CD32
+
+```toml
+[machine]
+profile = "CD32"
+
+[cd]
+image = "disc.cue"        # BIN/CUE cue sheet (MODE1/2048, MODE1/2352, AUDIO)
+insert_delay = 0.0        # emulated seconds after power-on to insert
+# nvram = "cd32-nvram.bin" # CD32 save-game EEPROM backing file (default)
+```
+
+The disc mounts on the machine's CD controller: Akiko on CD32, the DMAC on
+CDTV. `insert_delay` inserts the disc some emulated seconds after power-on
+with the proper media-change notification; some CDTV discs only boot when
+inserted after the boot screen appears. CD32 NVRAM
+persists to `cd32-nvram.bin` next to the working directory unless
+overridden; without a path the EEPROM is session-only.
+
+## `[[zorro]]` -- expansion boards
+
+```toml
+[[zorro]]
+metadata = "boards/megaram.toml"
+```
+
+Each entry adds a Zorro board described by a TOML metadata file, configured
+in file order after the built-in `[memory]` fast/z3 boards. See
+[](../zorro) for the metadata format and how autoconfig assigns
+addresses.
