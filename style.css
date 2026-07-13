@@ -310,6 +310,7 @@ img { max-width: 100%; display: block; }
   display: grid; gap: 1.6rem;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
+.shot-row--after { margin-top: 1.6rem; }
 
 /* status bar callout */
 .statusbar-callout {
@@ -341,15 +342,37 @@ img { max-width: 100%; display: block; }
 @media (min-width: 880px) {
   .debugger { grid-template-columns: 1.05fr 0.95fr; gap: 2.4rem; }
 }
-.debugger__shot { margin: 0; }
-.debugger__shot img {
+/* debugger screen gallery, styled after the debugger's own tab strip */
+.dbg-gallery { min-width: 0; }
+.dbg-gallery__tabs {
+  display: flex; flex-wrap: wrap; gap: 0.35rem;
+  padding: 0.3rem; margin-bottom: 1rem;
+  border: 1px solid var(--line); border-radius: 10px;
+  background: rgba(255,255,255,0.02);
+}
+.dbg-tab {
+  flex: 1 1 auto; min-width: 60px;
+  padding: 0.45rem 0.6rem; border: 0; border-radius: 7px; cursor: pointer;
+  font-family: var(--font-mono); font-size: 0.82rem; letter-spacing: 0.02em;
+  color: var(--ink-soft); background: transparent;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.dbg-tab:hover { color: var(--ink); background: rgba(255,255,255,0.03); }
+.dbg-tab[aria-selected="true"] {
+  color: var(--copper-hi); background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.dbg-tab:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.dbg-gallery__shot { margin: 0; }
+.dbg-gallery__shot[hidden] { display: none; }
+.dbg-gallery__shot img {
   width: 100%; border-radius: var(--radius); border: 1px solid var(--line);
   box-shadow: 0 24px 60px rgba(0,0,0,0.55);
 }
-.debugger__shot figcaption {
+.dbg-gallery__shot figcaption {
   margin-top: 0.8rem; color: var(--ink-mute); font-size: 0.92rem;
 }
-.debugger__shot figcaption strong { color: var(--ink-soft); font-weight: 600; }
+.dbg-gallery__shot figcaption strong { color: var(--ink-soft); font-weight: 600; }
 
 .debugger__panel {
   background: linear-gradient(180deg, var(--surface-2), var(--surface));

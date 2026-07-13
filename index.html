@@ -224,9 +224,10 @@
     <div class="section__head">
       <span class="kicker">// screenshots</span>
       <h2>See it run</h2>
-      <p>Real captures from the emulator window - chrome, status bar and all. Save a still
-         to PNG, or record the screen to a lossless AVI - both locked to the emulated clock,
-         so even a warp-speed capture plays back at the right speed.</p>
+      <p>Real captures from the emulator - some from the window, chrome and status bar
+         and all, some grabbed headless from a scripted run. Save a still to PNG, or record
+         the screen to a lossless AVI - both locked to the emulated clock, so even a
+         warp-speed capture plays back at the right speed.</p>
     </div>
 
     <figure class="shot shot--feature">
@@ -242,6 +243,19 @@
       <figure class="shot">
         <img src="assets/shot-dancer.png" alt="Spaceballs State of the Art demo running in Copperline" loading="lazy">
         <figcaption><strong>State of the Art.</strong> Spaceballs' OCS demo - timing-sensitive, at real speed.</figcaption>
+      </figure>
+    </div>
+
+    <div class="shot-row shot-row--after">
+      <figure class="shot">
+        <img src="assets/shot-hamazing.png" alt="A scene from Desire's HAMazing demo: a robot and a toy monkey on a couch, lit by a swinging lamp, rendered in Hold-And-Modify" loading="lazy">
+        <figcaption><strong>HAMazing.</strong> Desire's Hold-And-Modify demo - a swinging
+           lamp lights the scene, all in HAM.</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="assets/shot-inside.png" alt="A scene from Desire's Inside demo: an Amiga 500 motherboard drawn as pixel art, with the CPU, Paula, Fat Agnus, ROM and RAM banks labelled" loading="lazy">
+        <figcaption><strong>Inside.</strong> Desire's pixel-art A500 motherboard, chip by
+           chip - the machine drawing its own insides.</figcaption>
       </figure>
     </div>
 
@@ -292,6 +306,19 @@
       </div>
     </div>
 
+    <div class="shot-row shot-row--after">
+      <figure class="shot">
+        <img src="assets/shot-launcher-storage.png" alt="The launcher's Hard Disk tab on an A1200 profile, with an IDE master image selected and a SCSI controller selector with seven unit slots" loading="lazy">
+        <figcaption><strong>Hard Disk.</strong> IDE master and slave, and an A2091 / A4091
+           SCSI controller with up to seven units.</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="assets/shot-launcher-zorro.png" alt="The launcher's Zorro tab on an A500 profile, showing an external WASM plugin board's declared settings: mode, verbose, MTU, boot ROM and MAC address" loading="lazy">
+        <figcaption><strong>Zorro.</strong> An external WASM plugin board's own settings -
+           declared by the plugin, drawn by the launcher.</figcaption>
+      </figure>
+    </div>
+
     <ul class="dbg-tabs" aria-label="What the launcher configures">
       <li><span class="dbg-tabs__name">Profiles</span> A1000, A500 / OCS / +, A600, A1200, CDTV and CD32 - start from a real machine and adjust.</li>
       <li><span class="dbg-tabs__name">Chipset &amp; CPU</span> Agnus / Denise revisions, 68000 - 68040 selection, clock, caches and FPU.</li>
@@ -317,11 +344,50 @@
     </div>
 
     <div class="debugger">
-      <figure class="debugger__shot">
-        <img src="assets/shot-debugger.png" alt="The Copperline debugger window on the CPU tab, showing the register file, a live 68000 disassembly, and the transport controls including the reverse Frame, Step and Run buttons" loading="lazy">
-        <figcaption><strong>The CPU tab.</strong> Register file, live disassembly that
-           follows the PC, and the transport row - with reverse controls on the right.</figcaption>
-      </figure>
+      <div class="dbg-gallery">
+        <div class="dbg-gallery__tabs" role="tablist" aria-label="Debugger screens">
+          <button class="dbg-tab" id="dbgtab-cpu" role="tab" aria-selected="true" aria-controls="dbgshot-cpu">CPU</button>
+          <button class="dbg-tab" id="dbgtab-video" role="tab" aria-selected="false" aria-controls="dbgshot-video" tabindex="-1">Video</button>
+          <button class="dbg-tab" id="dbgtab-audio" role="tab" aria-selected="false" aria-controls="dbgshot-audio" tabindex="-1">Audio</button>
+          <button class="dbg-tab" id="dbgtab-iomap" role="tab" aria-selected="false" aria-controls="dbgshot-iomap" tabindex="-1">IO Map</button>
+          <button class="dbg-tab" id="dbgtab-break" role="tab" aria-selected="false" aria-controls="dbgshot-break" tabindex="-1">Break</button>
+          <button class="dbg-tab" id="dbgtab-console" role="tab" aria-selected="false" aria-controls="dbgshot-console" tabindex="-1">Console</button>
+        </div>
+
+        <figure class="dbg-gallery__shot" id="dbgshot-cpu" role="tabpanel" aria-labelledby="dbgtab-cpu">
+          <img src="assets/shot-dbg-cpu.png" alt="The debugger's CPU tab: the register file, decoded status register, a live 68000 disassembly at the PC, and transport controls including the reverse Frame, Step and Run buttons">
+          <figcaption><strong>The CPU tab.</strong> Registers you can poke, decoded SR
+             flags, a live disassembly that follows the PC - and the reverse transport
+             on the right.</figcaption>
+        </figure>
+        <figure class="dbg-gallery__shot" id="dbgshot-video" role="tabpanel" aria-labelledby="dbgtab-video" hidden>
+          <img src="assets/shot-dbg-video.png" alt="The debugger's Video tab: a decoded BPLCON0, per-plane and per-sprite isolation toggles, sprite DMA positions, and the 256-entry palette" loading="lazy">
+          <figcaption><strong>The Video tab.</strong> Hide individual planes and sprites
+             in the picture without touching the emulation - with per-sprite decode and
+             the live 256-entry palette.</figcaption>
+        </figure>
+        <figure class="dbg-gallery__shot" id="dbgshot-audio" role="tabpanel" aria-labelledby="dbgtab-audio" hidden>
+          <img src="assets/shot-dbg-audio.png" alt="The debugger's Audio tab: Paula's four channels with decoded DMA state, latches and pointers, per-channel mute buttons and live oscilloscopes, plus a CD-DA row" loading="lazy">
+          <figcaption><strong>The Audio tab.</strong> Paula's four channels with their DMA
+             state machines decoded, per-channel mutes and live scopes - and a fifth row
+             for CD-DA.</figcaption>
+        </figure>
+        <figure class="dbg-gallery__shot" id="dbgshot-iomap" role="tabpanel" aria-labelledby="dbgtab-iomap" hidden>
+          <img src="assets/shot-dbg-iomap.png" alt="The debugger's IO Map tab: the custom register bank with live values, with BPLCON0 selected and its bits decoded by name" loading="lazy">
+          <figcaption><strong>The IO Map tab.</strong> Every custom-bank register with its
+             live value - here BPLCON0, decoded bit by bit.</figcaption>
+        </figure>
+        <figure class="dbg-gallery__shot" id="dbgshot-break" role="tabpanel" aria-labelledby="dbgtab-break" hidden>
+          <img src="assets/shot-dbg-break.png" alt="The debugger's Break tab: a PC breakpoint, a memory watchpoint, and a DMACON chipset-register watch that stops on write" loading="lazy">
+          <figcaption><strong>The Break tab.</strong> PC breakpoints, memory watchpoints
+             and chipset-register watches - here DMACON, stopping on write.</figcaption>
+        </figure>
+        <figure class="dbg-gallery__shot" id="dbgshot-console" role="tabpanel" aria-labelledby="dbgtab-console" hidden>
+          <img src="assets/shot-dbg-console.png" alt="The Copperline debugger console: a breakpoint is set and hit, the stop is reported with PC, beam position and frame, and the code at the stop is disassembled" loading="lazy">
+          <figcaption><strong>The console.</strong> GDB-flavoured, in its own window -
+             set a breakpoint, run to it, disassemble at the stop.</figcaption>
+        </figure>
+      </div>
 
       <div class="debugger__panel">
         <span class="card__tag">reverse debugging</span>
@@ -356,13 +422,6 @@
       <li><span class="dbg-tabs__name">IO Map</span> Every custom-bank register with its live value, and the selected register's bits decoded by name.</li>
       <li><span class="dbg-tabs__name">Break</span> Conditional, counted PC breakpoints plus memory and chipset-register watchpoints, whichever bus master writes.</li>
     </ul>
-
-    <figure class="shot shot--feature">
-      <img src="assets/shot-audio.png" alt="The Copperline debugger on the Audio tab, showing Paula's four audio channels with decoded DMA state, latches and pointers, per-channel mute buttons and oscilloscopes, and a CD-DA row" loading="lazy">
-      <figcaption><strong>The Audio tab.</strong> Paula's four channels with their DMA
-         state machines decoded, per-channel mutes and live scopes - and a fifth row
-         for CD-DA.</figcaption>
-    </figure>
   </section>
 
   <hr class="copperline">
@@ -379,10 +438,10 @@
 
     <div class="analyzer">
       <figure class="analyzer__shot">
-        <img src="assets/shot-analyzer.png" alt="The Copperline frame analyzer window: a full-raster map of one frame with every colour clock coloured by its chip-bus owner, a per-owner cycle tally with percentages, blitter grant and wait figures, and a selected-scanline strip" loading="lazy">
+        <img src="assets/shot-analyzer.png" alt="The Copperline frame analyzer window: a full-raster map of one frame with every colour clock coloured by its chip-bus owner and the captured picture ghosted underneath, a per-owner cycle tally with percentages, blitter grant and wait figures, and a selected-scanline strip" loading="lazy">
         <figcaption><strong>One captured frame.</strong> 313 beam lines by 227 colour clocks,
-           every cycle coloured by the bus master that owned it - here bitplane and blitter DMA
-           dominate a busy effect.</figcaption>
+           every cycle coloured by the bus master that owned it, the picture ghosted
+           underneath - here a heavy blit is taking more of the bus than bitplane DMA.</figcaption>
       </figure>
 
       <div class="analyzer__panel">
@@ -393,19 +452,18 @@
            frame, so a dropped line or a blit that starves the CPU is visible directly.</p>
         <p>It breaks out blitter grant against wait - the cycles the blitter held the bus
            versus the cycles it stalled behind higher-priority DMA - and you can click any
-           cycle to read back its line, hpos and owner.</p>
+           cycle to read back its line, hpos and owner, down to which blit it belongs to.</p>
 
         <p class="owner-list__cap">// chip-bus owners, one frame</p>
         <ul class="owner-list" aria-label="Per-owner chip-bus cycle share for one captured frame">
-          <li style="--c:#4076e6"><span class="owner-list__sw"></span><span class="owner-list__name">bitplane</span><span class="owner-list__bar"><i style="width:30.4%"></i></span><span class="owner-list__pct">30.4%</span></li>
-          <li style="--c:#de4e4c"><span class="owner-list__sw"></span><span class="owner-list__name">blitter</span><span class="owner-list__bar"><i style="width:27.5%"></i></span><span class="owner-list__pct">27.5%</span></li>
-          <li style="--c:#e6e8e0"><span class="owner-list__sw"></span><span class="owner-list__name">cpu</span><span class="owner-list__bar"><i style="width:21.0%"></i></span><span class="owner-list__pct">21.0%</span></li>
-          <li style="--c:#39404a"><span class="owner-list__sw"></span><span class="owner-list__name">idle</span><span class="owner-list__bar"><i style="width:12.8%"></i></span><span class="owner-list__pct">12.8%</span></li>
-          <li style="--c:#eece48"><span class="owner-list__sw"></span><span class="owner-list__name">copper</span><span class="owner-list__bar"><i style="width:3.2%"></i></span><span class="owner-list__pct">3.2%</span></li>
+          <li style="--c:#de4e4c"><span class="owner-list__sw"></span><span class="owner-list__name">blitter</span><span class="owner-list__bar"><i style="width:39.5%"></i></span><span class="owner-list__pct">39.5%</span></li>
+          <li style="--c:#4076e6"><span class="owner-list__sw"></span><span class="owner-list__name">bitplane</span><span class="owner-list__bar"><i style="width:37.8%"></i></span><span class="owner-list__pct">37.8%</span></li>
+          <li style="--c:#e6e8e0"><span class="owner-list__sw"></span><span class="owner-list__name">cpu</span><span class="owner-list__bar"><i style="width:11.2%"></i></span><span class="owner-list__pct">11.2%</span></li>
+          <li style="--c:#39404a"><span class="owner-list__sw"></span><span class="owner-list__name">idle</span><span class="owner-list__bar"><i style="width:7.5%"></i></span><span class="owner-list__pct">7.5%</span></li>
           <li style="--c:#44b4be"><span class="owner-list__sw"></span><span class="owner-list__name">refresh</span><span class="owner-list__bar"><i style="width:1.8%"></i></span><span class="owner-list__pct">1.8%</span></li>
           <li style="--c:#be7a36"><span class="owner-list__sw"></span><span class="owner-list__name">disk</span><span class="owner-list__bar"><i style="width:1.3%"></i></span><span class="owner-list__pct">1.3%</span></li>
-          <li style="--c:#d454dc"><span class="owner-list__sw"></span><span class="owner-list__name">sprite</span><span class="owner-list__bar"><i style="width:1.2%"></i></span><span class="owner-list__pct">1.2%</span></li>
           <li style="--c:#48be60"><span class="owner-list__sw"></span><span class="owner-list__name">audio</span><span class="owner-list__bar"><i style="width:0.8%"></i></span><span class="owner-list__pct">0.8%</span></li>
+          <li style="--c:#eece48"><span class="owner-list__sw"></span><span class="owner-list__name">copper</span><span class="owner-list__bar"><i style="width:0.1%"></i></span><span class="owner-list__pct">0.1%</span></li>
         </ul>
       </div>
     </div>
@@ -415,6 +473,7 @@
       <li><span class="dbg-tabs__name">Owner tally</span> Per-master cycle counts and percentages for the frame - refresh, bitplane, sprite, disk, audio, Copper, blitter, CPU and idle.</li>
       <li><span class="dbg-tabs__name">Blitter grant / wait</span> How much of the frame the blitter was granted the bus, and the cycles it spent waiting behind each DMA channel.</li>
       <li><span class="dbg-tabs__name">Selected scanline</span> Pin a line and replay its bus ownership one colour clock at a time, with the picked slot's owner decoded.</li>
+      <li><span class="dbg-tabs__name">Picture underlay</span> The frame's own picture ghosted beneath the ownership map, so you can see what each burst of DMA was drawing.</li>
       <li><span class="dbg-tabs__name">Register markers</span> Chipset register writes overlaid on the raster at the position where they landed.</li>
     </ul>
   </section>
@@ -838,31 +897,40 @@ cargo build <span class="c-flag">--release</span>
 
 <script>
   (function () {
-    var tablist = document.querySelector('.tabs__list');
-    if (!tablist) return;
+    // Shared tablist behaviour: click to select, arrow keys to move.
+    function initTabs(tablist) {
+      var tabs = Array.prototype.slice.call(tablist.querySelectorAll('[role="tab"]'));
 
-    var tabs = Array.prototype.slice.call(tablist.querySelectorAll('.tab'));
+      function selectTab(tab, focus) {
+        tabs.forEach(function (t) {
+          var selected = t === tab;
+          t.setAttribute('aria-selected', selected ? 'true' : 'false');
+          t.tabIndex = selected ? 0 : -1;
+          var panel = document.getElementById(t.getAttribute('aria-controls'));
+          if (panel) panel.hidden = !selected;
+        });
+        if (focus) tab.focus();
+      }
 
-    function selectTab(tab, focus) {
-      tabs.forEach(function (t) {
-        var selected = t === tab;
-        t.setAttribute('aria-selected', selected ? 'true' : 'false');
-        t.tabIndex = selected ? 0 : -1;
-        var panel = document.getElementById(t.getAttribute('aria-controls'));
-        if (panel) panel.hidden = !selected;
+      tabs.forEach(function (tab, i) {
+        tab.addEventListener('click', function () { selectTab(tab, false); });
+        tab.addEventListener('keydown', function (e) {
+          var dir = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+          if (!dir) return;
+          e.preventDefault();
+          selectTab(tabs[(i + dir + tabs.length) % tabs.length], true);
+        });
       });
-      if (focus) tab.focus();
+
+      return { tabs: tabs, select: selectTab };
     }
 
-    tabs.forEach(function (tab, i) {
-      tab.addEventListener('click', function () { selectTab(tab, false); });
-      tab.addEventListener('keydown', function (e) {
-        var dir = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
-        if (!dir) return;
-        e.preventDefault();
-        selectTab(tabs[(i + dir + tabs.length) % tabs.length], true);
-      });
-    });
+    var gallery = document.querySelector('.dbg-gallery__tabs');
+    if (gallery) initTabs(gallery);
+
+    var platformTabs = document.querySelector('.tabs__list');
+    if (!platformTabs) return;
+    var dl = initTabs(platformTabs);
 
     // Auto-detect the visitor's OS and pre-select the matching tab.
     var ua = (navigator.userAgent || '').toLowerCase();
@@ -875,8 +943,8 @@ cargo build <span class="c-flag">--release</span>
     } else if (/mac/.test(platform) || ua.indexOf('mac os') !== -1) {
       os = 'macos';
     }
-    var match = tabs.filter(function (t) { return t.getAttribute('data-os') === os; })[0];
-    if (match) selectTab(match, false);
+    var match = dl.tabs.filter(function (t) { return t.getAttribute('data-os') === os; })[0];
+    if (match) dl.select(match, false);
   })();
 
   // Keep the release version in the download snippets current. The static
