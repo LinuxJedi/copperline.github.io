@@ -141,6 +141,7 @@
       <div class="try-controls">
         <label class="btn btn--ghost">Insert DF0&hellip;
           <input id="df0" type="file" accept=".adf,.adz,.dms,.gz,.zip,.ipf,.scp" hidden></label>
+        <button class="btn btn--ghost" id="df0url">DF0 from URL&hellip;</button>
         <label class="btn btn--ghost">Load Kickstart&hellip;
           <input id="kick" type="file" accept=".rom,.bin" hidden></label>
         <button class="btn btn--ghost" id="eject">Eject</button>
@@ -155,7 +156,10 @@
         The same cycle-driven core as the desktop builds, running
         single-threaded in your browser. It boots the bundled open-source
         AROS ROM out of the box - no Kickstart needed - and you can load your
-        own Kickstart image and disk files with the buttons above. Everything
+        own Kickstart image and disk files with the buttons above. A disk can
+        also come from a link: paste an address into DF0 from URL, or append
+        <code>?df0=&lt;url&gt;</code> to this page's address to share a
+        bootable link (the host must allow cross-origin requests). Everything
         runs locally in your browser; nothing you load here is uploaded
         anywhere. Experimental: best on a desktop browser with a keyboard.
       </p>
