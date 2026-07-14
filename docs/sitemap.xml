@@ -17,6 +17,9 @@
     <loc>http://localhost:3000/headless</loc>
   </url>
   <url>
+    <loc>http://localhost:3000/browser</loc>
+  </url>
+  <url>
     <loc>http://localhost:3000/zorro</loc>
   </url>
   <url>
