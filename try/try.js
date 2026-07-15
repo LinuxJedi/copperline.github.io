@@ -71,6 +71,19 @@ function refreshBootButton() {
   bootBtn.textContent = bootRom && bootRom.label !== 'AROS' ? 'Boot Kickstart' : 'Boot AROS';
 }
 
+// Route picked or dropped Kickstart bytes: live-swap a running machine, or
+// stash them for the boot button. The stash is updated on a live swap too,
+// so a reboot fits the ROM chosen last, not the one from the original boot;
+// a rejected image throws before the stash is touched and changes nothing.
+function fitRom(bytes, label) {
+  if (emu) emu.load_rom(bytes, undefined);
+  bootRom = { rom: bytes, ext: null, label };
+  refreshBootButton();
+  setLoadStatus(
+    emu ? `Kickstart loaded: ${label} - machine power-cycled` : `will boot ${label}`,
+  );
+}
+
 // A disk image can also come from a link: /try/?df0=<url> fetches it and
 // inserts it at boot, so a bootable demo is one shareable URL, and the
 // "DF0 from URL" button does the same for a pasted address. The fetch
@@ -164,6 +177,19 @@ async function load() {
 async function boot() {
   bootBtn.disabled = true;
   try {
+    // Fit the ROM into a fresh machine before anything else: a bad image
+    // must abort the boot with the page still in its pre-boot state (emu
+    // stays null, so the pickers keep updating bootRom for the retry).
+    const machine = new WebEmu();
+    machine.load_rom(bootRom.rom, bootRom.ext ?? undefined);
+
+    // A reboot after an emulator error builds a new audio stack; close the
+    // previous one so it cannot keep playing alongside.
+    if (audioCtx) {
+      audioNode?.disconnect();
+      audioCtx.close().catch(() => {});
+      audioNode = null;
+    }
     audioCtx = new AudioContext({ sampleRate: 44100 });
     await audioCtx.audioWorklet.addModule('./audio-worklet.js');
     audioNode = new AudioWorkletNode(audioCtx, 'copperline-audio', {
@@ -184,13 +210,12 @@ async function boot() {
       window.addEventListener('keydown', unlock, { once: true });
     }
 
-    emu = new WebEmu();
-    emu.load_rom(bootRom.rom, bootRom.ext ?? undefined);
     if (pendingDisk) {
-      emu.insert_floppy(0, pendingDisk.bytes, pendingDisk.name);
+      machine.insert_floppy(0, pendingDisk.bytes, pendingDisk.name);
       pendingDisk = null;
     }
-    emu.set_volume_percent(Number($('vol').value));
+    machine.set_volume_percent(Number($('vol').value));
+    emu = machine;
     window.__emu = emu; // for debugging/automation
 
     overlay.style.display = 'none';
@@ -222,6 +247,11 @@ function tick(nowMs) {
     running = false;
     setLoadStatus(`emulator error: ${e.message ?? e}`);
     overlay.style.display = '';
+    // Drop the wedged machine and re-arm the boot button: the pickers go
+    // back to stashing (never a live swap into a crashed instance, which
+    // may have panicked) and a fresh boot rebuilds from the stash.
+    emu = null;
+    refreshBootButton();
     console.error(e);
     return;
   }
@@ -454,7 +484,8 @@ canvas.addEventListener(
         padTouch = { id: t.identifier, x: t.clientX, y: t.clientY, start: now, moved: 0 };
         clearTimeout(longPressTimer);
         longPressTimer = setTimeout(() => {
-          if (padTouch && padTouch.moved < TAP_SLOP_CSS_PX && padRmbTouchId === null) {
+          // emu can be gone by now: an emulator error drops the machine.
+          if (emu && padTouch && padTouch.moved < TAP_SLOP_CSS_PX && padRmbTouchId === null) {
             padDragging = true;
             emu.mouse_button(0, true);
             navigator.vibrate?.(15);
@@ -508,7 +539,7 @@ function onTouchEnd(e) {
         padTouch.moved < TAP_SLOP_CSS_PX
       ) {
         emu.mouse_button(0, true);
-        setTimeout(() => emu.mouse_button(0, false), CLICK_HOLD_MS);
+        setTimeout(() => emu?.mouse_button(0, false), CLICK_HOLD_MS);
       }
       padTouch = null;
     } else if (t.identifier === padRmbTouchId) {
@@ -671,15 +702,7 @@ $('kick').addEventListener('change', async (e) => {
   e.target.value = '';
   if (!file) return;
   try {
-    const bytes = new Uint8Array(await file.arrayBuffer());
-    if (emu) {
-      emu.load_rom(bytes, undefined);
-      setLoadStatus(`Kickstart loaded: ${file.name} - machine power-cycled`);
-    } else {
-      bootRom = { rom: bytes, ext: null, label: file.name };
-      refreshBootButton();
-      setLoadStatus(`will boot ${file.name}`);
-    }
+    fitRom(new Uint8Array(await file.arrayBuffer()), file.name);
   } catch (err) {
     setLoadStatus(`ROM load failed: ${err.message ?? err}`);
   }
@@ -819,6 +842,90 @@ $('df0url')?.addEventListener('click', () => {
     'Disk image URL (ADF/ADZ/DMS/IPF/SCP, gzip or zip packed):',
   );
   if (url && url.trim()) insertDiskFromUrl(url.trim());
+});
+
+// --- drag and drop ---------------------------------------------------------
+// Files dropped anywhere on the page route like the pickers: a .rom loads
+// (or queues) a Kickstart, anything else inserts into DF0. The hint overlay
+// is built here rather than in the page shell (index.html lives in the
+// website repository and is left alone).
+
+let dropHint = null; // built lazily, like the fullscreen UI
+let dragDepth = 0; // dragenter/dragleave fire per element crossed
+
+function ensureDropHint() {
+  if (dropHint) return dropHint;
+  dropHint = document.createElement('div');
+  dropHint.style.cssText =
+    'position:absolute;inset:0;z-index:4;display:none;' +
+    'align-items:center;justify-content:center;text-align:center;' +
+    'pointer-events:none;background:rgba(10,13,22,0.7);' +
+    'border:2px dashed rgba(255,255,255,0.5);' +
+    'color:rgba(255,255,255,0.9);padding:1rem;' +
+    'font:600 1rem "IBM Plex Mono",ui-monospace,monospace;';
+  dropHint.textContent = 'Drop: disk image -> DF0, .rom -> Kickstart';
+  shell.appendChild(dropHint);
+  return dropHint;
+}
+
+function showDropHint(on) {
+  ensureDropHint().style.display = on ? 'flex' : 'none';
+}
+
+async function handleDroppedFiles(files) {
+  const list = Array.from(files ?? []);
+  if (!list.length) return;
+  const oversize = list.find((f) => f.size > DISK_URL_MAX_BYTES);
+  if (oversize) {
+    setLoadStatus(`${oversize.name}: file too large`);
+    return;
+  }
+  // One drive and one ROM socket: the first of each kind wins, extras
+  // are ignored.
+  const rom = list.find((f) => /\.rom$/i.test(f.name));
+  const disk = list.find((f) => !/\.rom$/i.test(f.name));
+  try {
+    if (rom) {
+      fitRom(new Uint8Array(await rom.arrayBuffer()), rom.name);
+    }
+    if (disk) {
+      const bytes = new Uint8Array(await disk.arrayBuffer());
+      if (emu) {
+        emu.insert_floppy(0, bytes, disk.name);
+        setLoadStatus(`DF0: ${disk.name} (write-protected)`);
+      } else {
+        pendingDisk = { bytes, name: disk.name };
+        setLoadStatus(`DF0: ${disk.name} (inserts at boot)`);
+      }
+    }
+  } catch (err) {
+    setLoadStatus(`drop failed: ${err.message ?? err}`);
+  }
+}
+
+// Document-level handlers so a missed drop never navigates the page away
+// to the dropped file.
+document.addEventListener('dragenter', (e) => {
+  if (!e.dataTransfer?.types?.includes('Files')) return;
+  e.preventDefault();
+  dragDepth += 1;
+  showDropHint(true);
+});
+document.addEventListener('dragover', (e) => {
+  if (!e.dataTransfer?.types?.includes('Files')) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'copy';
+});
+document.addEventListener('dragleave', () => {
+  dragDepth = Math.max(0, dragDepth - 1);
+  if (dragDepth === 0) showDropHint(false);
+});
+document.addEventListener('drop', (e) => {
+  dragDepth = 0;
+  showDropHint(false);
+  if (!e.dataTransfer) return;
+  e.preventDefault();
+  handleDroppedFiles(e.dataTransfer.files);
 });
 
 bootBtn.addEventListener('click', boot);
