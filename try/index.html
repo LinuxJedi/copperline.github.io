@@ -78,6 +78,10 @@
     font-family: "IBM Plex Mono", ui-monospace, monospace;
     font-size: 0.88rem;
   }
+  .try-bug {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.85rem;
+  }
   .try-controls {
     display: flex;
     flex-wrap: wrap;
@@ -119,6 +123,7 @@
     <a href="../docs/">Docs</a>
     <a href="../news/">News</a>
     <a href="../#download">Download</a>
+    <a id="bug-report" href="https://github.com/LinuxJedi/Copperline/issues/new?template=bug_report.yml" target="_blank" rel="noopener">Report a bug</a>
     <a class="nav__gh" href="https://github.com/LinuxJedi/Copperline" target="_blank" rel="noopener">GitHub</a>
   </nav>
 </header>
@@ -136,6 +141,9 @@
         <div class="try-overlay" id="overlay">
           <button class="btn btn--primary btn--big" id="boot" disabled>Boot AROS</button>
           <p class="try-status" id="load-status">loading emulator&hellip;</p>
+          <a class="try-bug" id="bug-report-err" hidden
+             href="https://github.com/LinuxJedi/Copperline/issues/new?template=bug_report.yml"
+             target="_blank" rel="noopener">Report this on GitHub</a>
         </div>
       </div>
 
@@ -184,6 +192,9 @@
         Disks are always write-protected in the browser. Kickstart ROMs are
         copyrighted and not provided - use your own dump. The bundled AROS ROMs
         are distributed under the <a href="aros/LICENSE">AROS Public License</a>.
+        Found a bug? The Report a bug link at the top of the page opens the
+        GitHub issue form with the details this page knows (build, browser,
+        machine state) already filled in for you to edit.
       </p>
     </div>
   </section>
