@@ -20,6 +20,25 @@ export class WebEmu {
         return ret >>> 0;
     }
     /**
+     * Identify this build for bug reports: the tag or branch and commit the
+     * wasm was compiled from. GitHub Actions exports GITHUB_REF_NAME and
+     * GITHUB_SHA to every step, so the publish workflow bakes them in for
+     * free; anything built outside CI reports itself as a dev build.
+     * @returns {string}
+     */
+    static build_info() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.webemu_build_info();
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
      * @param {number} drive
      */
     eject_floppy(drive) {
