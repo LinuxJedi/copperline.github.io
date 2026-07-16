@@ -103,7 +103,7 @@ body {
 a { color: var(--blue); text-decoration: none; }
 a:hover { color: var(--copper-hi); }
 
-img { max-width: 100%; display: block; }
+img { max-width: 100%; height: auto; display: block; }
 
 /* CRT scanline overlay ---------------------------------------------------- */
 .scanlines {
