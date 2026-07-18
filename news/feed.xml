@@ -8,6 +8,14 @@
   <atom:link href="https://copperline.dev/news/feed.xml" rel="self" type="application/rss+xml"/>
 
   <item>
+    <title>Copperline 0.12.0: the browser build and the big boxes</title>
+    <link>https://copperline.dev/news/copperline-0-12-0.html</link>
+    <guid>https://copperline.dev/news/copperline-0-12-0.html</guid>
+    <pubDate>Sat, 18 Jul 2026 06:11:02 +0000</pubDate>
+    <description>The whole emulator compiled to WebAssembly and running client-side at copperline.dev/try, A3000 / A4000 profiles booting from their onboard SCSI and IDE, host-directory mounts gone writable, a JSON-RPC control protocol for scripted live sessions, SCSI CD-ROM drives with CD audio, and any controller in either game port.</description>
+  </item>
+
+  <item>
     <title>Copperline 0.11.0: boot from a host directory</title>
     <link>https://copperline.dev/news/copperline-0-11-0.html</link>
     <guid>https://copperline.dev/news/copperline-0-11-0.html</guid>

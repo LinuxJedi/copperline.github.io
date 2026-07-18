@@ -86,11 +86,11 @@
         </a>
       </div>
       <p class="hero__release reveal" style="--d:4">
-        <a href="news/copperline-0-11-0.html">0.11.0 is out &middot; read what's new</a>
+        <a href="news/copperline-0-12-0.html">0.12.0 is out &middot; read what's new</a>
       </p>
       <ul class="hero__chips reveal" style="--d:5" aria-label="Supported hardware">
         <li>68000 - 68060</li><li>OCS</li><li>ECS</li><li>AGA</li>
-        <li>A1000 - A1200</li><li>CDTV</li><li>CD32</li><li>HAM8</li>
+        <li>A1000 - A4000</li><li>CDTV</li><li>CD32</li><li>HAM8</li>
       </ul>
     </div>
   </section>
@@ -158,7 +158,7 @@
         <span class="card__tag">chipsets</span>
         <h3>OCS, ECS &amp; AGA</h3>
         <p>Independent Agnus / Denise revisions and machine profiles spanning the A1000,
-           A500 / A500+ and A1200, plus CDTV and CD32. Boots the bundled AROS ROM out of the box - no
+           A500 / A500+, A1200 and the big-box A3000 / A4000, plus CDTV and CD32. Boots the bundled AROS ROM out of the box - no
            Kickstart needed - as well as Kickstart 1.3 / 2.05 / 3.1 and DiagROM, and runs
            the timing-sensitive regression set at real speed.</p>
       </article>
@@ -176,19 +176,20 @@
       <article class="card">
         <span class="card__tag">peripherals</span>
         <h3>Input &amp; audio</h3>
-        <p>A bit-timed keyboard (6500/1 MCU), mouse, USB gamepad (pure-Rust gilrs, no
-           SDL2), and 4-channel Paula audio with the LED filter, selectable host output
-           device and mono / stereo shaping - plus Paula's serial port bridged to host
-           MIDI or TCP.</p>
+        <p>A bit-timed keyboard (6500/1 MCU), any controller in either game port - mouse,
+           joystick, CD32 pad or analogue paddles, driven by USB gamepads (pure-Rust
+           gilrs, no SDL2) - and 4-channel Paula audio with the LED filter. Paula's
+           serial port bridges to host MIDI or TCP, and the parallel port takes a
+           printer or an 8-bit audio sampler.</p>
       </article>
 
       <article class="card">
         <span class="card__tag">storage</span>
         <h3>Disks, drives &amp; expansion</h3>
         <p>Up to four floppies (ADF / ADZ / DMS / SCP, plain or zipped) with multi-disk
-           swap playlists, Gayle IDE and A2091 / A4091 SCSI boards carrying up to seven
-           drives, CDTV and CD32 CD-ROM, Zorro II / III autoconfig, and host directories
-           mounted as live AmigaDOS volumes - bootable ones included.</p>
+           swap playlists, Gayle and A4000 IDE, A2091 / A4091 / A3000 SCSI carrying hard
+           disks and CD-ROM drives, CDTV and CD32 CD, Zorro II / III autoconfig, and host
+           directories mounted as writable AmigaDOS volumes - bootable ones included.</p>
       </article>
 
       <article class="card">
@@ -221,8 +222,9 @@
         <h3>Deterministic by design</h3>
         <p>An in-window debugger that steps <strong>backwards</strong>, a GDB-flavoured
            console, a chip-bus frame analyzer, deterministic save states, input
-           recording / replay, and headless screenshot &amp; frame-dump capture. Every
-           replay is byte-identical.</p>
+           recording / replay, headless screenshot &amp; frame-dump capture, and a
+           JSON-RPC control protocol for driving live sessions. Every replay is
+           byte-identical.</p>
       </article>
     </div>
   </section>
@@ -330,10 +332,10 @@
     </div>
 
     <ul class="dbg-tabs" aria-label="What the launcher configures">
-      <li><span class="dbg-tabs__name">Profiles</span> A1000, A500 / OCS / +, A600, A1200, CDTV and CD32 - start from a real machine and adjust.</li>
-      <li><span class="dbg-tabs__name">Chipset &amp; CPU</span> Agnus / Denise revisions, 68000 - 68040 selection, clock, caches and FPU.</li>
+      <li><span class="dbg-tabs__name">Profiles</span> A1000, A500 / OCS / +, A600, A1200, A3000, A4000, CDTV and CD32 - start from a real machine and adjust.</li>
+      <li><span class="dbg-tabs__name">Chipset &amp; CPU</span> Agnus / Denise revisions, 68000 - 68060 selection, clock, caches and FPU.</li>
       <li><span class="dbg-tabs__name">Memory &amp; ROM</span> Chip / fast / slow RAM, Zorro III RAM where the CPU allows it, and the boot ROM.</li>
-      <li><span class="dbg-tabs__name">Storage</span> Floppy drives and swap lists, IDE and SCSI hard disks, and CD images.</li>
+      <li><span class="dbg-tabs__name">Storage</span> Floppy drives and swap lists, IDE and SCSI hard disks, CD images, and host-directory mounts with per-mount access control.</li>
       <li><span class="dbg-tabs__name">Zorro &amp; plugins</span> Autoconfig boards, external WASM plugin boards with their own settings, and A2065 networking.</li>
       <li><span class="dbg-tabs__name">A/V &amp; emulation</span> Audio and video presentation plus the emulation behaviour controls.</li>
     </ul>
@@ -515,6 +517,10 @@
         <li><strong>Restore without the ROM.</strong> <code>--load-state</code> brings a
            machine snapshot back even when the original Kickstart isn't on hand - the
            save state carries the whole machine.</li>
+        <li><strong>Drive a live session over JSON-RPC.</strong> <code>--control</code> opens
+           the Copperline Control Protocol on loopback TCP: breakpoints, input injection,
+           media swaps, screenshots, save states, and streaming frame / serial / interrupt
+           events, from scripts or the <code>copperline-ctl</code> client.</li>
         <li><strong>Built for agents.</strong> Copperline began as an emulator you could hand
            to an AI agent: feed it a timestamp or a snapshot and it investigates from
            screenshots and debug output, automatically.</li>
@@ -558,8 +564,13 @@ copperline game.adf <span class="c-flag">--script</span> run.clscript <span clas
       <li>Battery RTC</li>
       <li>Floppy DMA</li>
       <li>Gayle IDE</li>
+      <li>A4000 IDE</li>
       <li>A2091 SCSI</li>
       <li>A4091 SCSI</li>
+      <li>A3000 SCSI (SDMAC)</li>
+      <li>Ramsey / Fat Gary</li>
+      <li>SCSI CD-ROM</li>
+      <li>Parallel port</li>
       <li>030 / 040 / 060 MMU</li>
       <li>HOSTFS volumes</li>
       <li>Zorro II / III autoconfig</li>
@@ -612,7 +623,8 @@ copperline game.adf <span class="c-flag">--script</span> run.clscript <span clas
           <li>The tooling - debugger, frame analyzer, headless scripting - which is
               half the point of the project.</li>
           <li>Floppies (ADF / ADZ / DMS / SCP, plain or zipped), Gayle IDE,
-              A2091 / A4091 SCSI, CDTV / CD32 CD.</li>
+              A2091 / A4091 SCSI with CD-ROM drives, CDTV / CD32 CD, and host
+              directories mounted as writable, bootable AmigaDOS volumes.</li>
         </ul>
       </div>
 
@@ -621,21 +633,21 @@ copperline game.adf <span class="c-flag">--script</span> run.clscript <span clas
         <ul>
           <li>Developed and tested on macOS. The Linux and Windows builds are produced
               by CI and get far less real-world exercise.</li>
-          <li>Host directories mount - and boot - as live HOSTFS volumes, but read-only
-              for now. The IDE / SCSI directory route is writable but session-only:
-              changes are not written back to your host folder.</li>
+          <li>The A3000 and A4000 profiles are new this release and still incomplete.
+              Both boot AmigaOS from their onboard SCSI / IDE, but expect gaps.</li>
+          <li>The browser build is new this release too: the same core, with far
+              less real-world mileage than the desktop app.</li>
           <li>A2065 Ethernet ships with a loopback backend only - real host networking
               backends are still on the list.</li>
-          <li>CD images are CUE/BIN only; plain .iso is not read yet.</li>
         </ul>
       </div>
 
       <div class="status-col status-col--gap">
         <h3>Not there yet</h3>
         <ul>
-          <li>No fullscreen mode yet. Yes, really - it is near the top of the list.</li>
-          <li>No drag-and-drop disk insertion, and save states have a single slot with
-              no quick-save hotkeys.</li>
+          <li>No fullscreen in the desktop app yet - the browser build got there
+              first. Still near the top of the list.</li>
+          <li>Save states have a single slot with no quick-save hotkeys.</li>
           <li>No IPF (CAPS) protected-disk images - deliberately out of scope for the
               built-in loader for now.</li>
           <li>No HD (1.76 MB) or PC / CrossDOS floppies.</li>
@@ -647,7 +659,7 @@ copperline game.adf <span class="c-flag">--script</span> run.clscript <span clas
     <div class="status-next">
       <span class="card__tag">// main vs the release</span>
       <p>Development happens in the open, and <code>main</code> usually runs well ahead
-         of the release you can download. Right now it doesn't: 0.11.0 has just shipped,
+         of the release you can download. Right now it doesn't: 0.12.0 has just shipped,
          so for once the release and main are the same machine.</p>
       <p>Every release gets a write-up on the <a href="news/">news page</a> when it
          ships. If you want to follow development commit by commit,
@@ -691,7 +703,7 @@ copperline game.adf <span class="c-flag">--script</span> run.clscript <span clas
         <div class="tab-panel" id="panel-macos" role="tabpanel" aria-labelledby="tab-macos">
           <div class="codeblock" role="group" aria-label="Run the macOS .dmg">
             <div class="codeblock__bar"><span></span><span></span><span></span> run the macos .dmg</div>
-            <pre><code><span class="c-comment"># open Copperline-<span class="relver">0.11.0</span>-macos-universal.dmg and drag</span>
+            <pre><code><span class="c-comment"># open Copperline-<span class="relver">0.12.0</span>-macos-universal.dmg and drag</span>
 <span class="c-comment"># Copperline.app into your Applications folder, then launch it</span>
 
 <span class="c-comment"># the build is not notarized, so macOS blocks the first launch.</span>
@@ -714,14 +726,14 @@ brew install <span class="c-flag">--HEAD</span> copperline</code></pre>
           <div class="codeblock" role="group" aria-label="Run the Linux AppImage">
             <div class="codeblock__bar"><span></span><span></span><span></span> run the appimage</div>
             <pre><code><span class="c-comment"># grab the .AppImage from the latest release, then make it executable</span>
-chmod +x Copperline-<span class="relver">0.11.0</span>-x86_64.AppImage
+chmod +x Copperline-<span class="relver">0.12.0</span>-x86_64.AppImage
 
 <span class="c-comment"># run it - the bundled AROS ROM means no Kickstart is required</span>
-./Copperline-<span class="relver">0.11.0</span>-x86_64.AppImage
+./Copperline-<span class="relver">0.12.0</span>-x86_64.AppImage
 
 <span class="c-comment"># or boot your own Kickstart ROM, or a config file</span>
-./Copperline-<span class="relver">0.11.0</span>-x86_64.AppImage path/to/kickstart.rom
-./Copperline-<span class="relver">0.11.0</span>-x86_64.AppImage <span class="c-flag">--config</span> copperline.toml</code></pre>
+./Copperline-<span class="relver">0.12.0</span>-x86_64.AppImage path/to/kickstart.rom
+./Copperline-<span class="relver">0.12.0</span>-x86_64.AppImage <span class="c-flag">--config</span> copperline.toml</code></pre>
           </div>
 
           <div class="codeblock" role="group" aria-label="Install with Homebrew on Linux">
@@ -738,7 +750,7 @@ brew install <span class="c-flag">--HEAD</span> copperline</code></pre>
         <div class="tab-panel" id="panel-windows" role="tabpanel" aria-labelledby="tab-windows" hidden>
           <div class="codeblock" role="group" aria-label="Run the Windows build">
             <div class="codeblock__bar"><span></span><span></span><span></span> run the windows build</div>
-            <pre><code><span class="c-comment"># download and extract Copperline-<span class="relver">0.11.0</span>-win-x64.zip, then from a terminal</span>
+            <pre><code><span class="c-comment"># download and extract Copperline-<span class="relver">0.12.0</span>-win-x64.zip, then from a terminal</span>
 <span class="c-comment"># with no ROM it boots the bundled AROS Kickstart replacement</span>
 copperline.exe
 copperline.exe path\to\kickstart.rom
