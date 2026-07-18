@@ -67,12 +67,14 @@ deterministically:
 |---|---|
 | `--press-after SECS KEY` | Press and release an Amiga key (default ~100 ms hold) |
 | `--key-after SECS KEY MS` | Hold a key for exactly MS milliseconds (for modifier chords) |
-| `--click-after SECS BUTTON MS` | Press a mouse button (`left`/`right`/`middle`) for MS milliseconds |
-| `--joy-after SECS BUTTON MS` | Press a port-2 joystick / CD32-pad control (`up`/`down`/`left`/`right`/`red` (alias `fire`)/`blue`/`green`/`yellow`/`play`/`rwd`/`ffw`) for MS milliseconds |
-| `--mouse-after SECS DX DY` | Apply a relative port-1 mouse motion of (DX, DY) counter steps |
+| `--click-after SECS BUTTON MS [PORT]` | Press a mouse button (`left`/`right`/`middle`) for MS milliseconds (default port 1) |
+| `--joy-after SECS BUTTON MS [PORT]` | Press a joystick / CD32-pad control (`up`/`down`/`left`/`right`/`red` (alias `fire`)/`blue`/`green`/`yellow`/`play`/`rwd`/`ffw`) for MS milliseconds (default port 2) |
+| `--mouse-after SECS DX DY [PORT]` | Apply a relative mouse motion of (DX, DY) counter steps (default port 1) |
+| `--pot-after SECS X Y [PORT]` | Set an analogue controller's stick/paddle position, 0-255 per axis (default port 2) |
 | `--floppy-drives COUNT` | Connect `COUNT` floppy drives (`1` to `4`), so scheduled inserts can target empty external drives |
 | `--insert-disk-after SECS DFN PATH` | Insert a disk image into `df0`..`df3` |
 | `--defer-disk-insert SECS DFN` | Start with the configured drive empty, then insert its configured image |
+| `--insert-cd-after SECS PATH` | Swap the CD image (`.cue`/`.iso`) in the machine's CD drive (CDTV, CD32, or a SCSI CD-ROM unit) |
 | `--script FILE` | Run scripted-input directives from a file (below) |
 | `--record-input PATH` | Record all machine-bound input for the whole run; the script is written to PATH on exit |
 
@@ -82,6 +84,23 @@ on. All the flags repeat, so several inputs can be queued:
 
 ```sh
 ./target/release/copperline --key-after 14.0 ctrl 500 --press-after 14.1 c
+```
+
+The controller-port flags take an optional trailing `PORT` token (`1` or
+`2`) naming the game port the event lands on, so any controller wiring set
+with `--port1`/`--port2` (see the configuration guide) can be driven:
+omitted, each flag keeps its traditional port (mouse events port 1,
+joystick/pot events port 2), so existing invocations are unchanged. The
+events drive the named port's electrical lines whatever device is
+configured there. (One consequence of the optional token: a positional
+ROM/disk path literally named `1` or `2` cannot directly follow one of
+these flags -- write it as `./1`.)
+
+```sh
+# Joystick in port 1, mouse in port 2, and inputs aimed at each.
+./target/release/copperline --port1 joystick --port2 mouse \
+  --joy-after 43 up 3000 1 --click-after 43 left 3000 2 \
+  --mouse-after 43.5 20 10 2
 ```
 
 ## Input recording and script files
@@ -97,6 +116,9 @@ emulator configuration.
 joy-after 60.0 red 300
 key-after 75.0 f1 200
 insert-disk-after 90.0 df1 "disk 2.adf"
+# port-tagged forms work here too: fire on port 1, paddles on port 2
+joy-after 95.0 red 300 1
+pot-after 96.0 50 200
 ```
 
 Run it with `--script FILE` (combines freely with the other flags).
@@ -108,8 +130,9 @@ live-input recording, written to
 headless equivalent `--record-input PATH` records the whole run and
 writes the file on exit. Every input event that reaches the emulated
 machine is captured with its emulated timestamp -- key holds, mouse
-buttons and motion, port-2 joystick / CD32-pad controls, and floppy
-inserts -- so a manually driven session replays deterministically:
+buttons and motion, joystick / CD32-pad controls, analogue pot positions,
+and floppy inserts -- so a manually driven session replays
+deterministically:
 
 ```sh
 # Play through the section by hand once...
@@ -127,6 +150,41 @@ recorded from that point is a complete, shareable reproduction. Mouse
 motion is captured at frame granularity (one `mouse-after` per frame of
 movement); CD inserts are not recorded -- use the `[cd]` config section
 for those.
+
+The recorder is port-aware: each port is diffed according to the device
+plugged into it (mouse buttons/motion, joystick/pad controls, or analogue
+`pot-after` positions), and a port token is emitted only when it differs
+from the directive's default -- a session on the stock mouse+joystick
+wiring records byte-identically to the pre-port-aware format. Sessions on
+other wirings note it in a `# ports: port1=... port2=...` header comment;
+replay the script together with the matching `--port1`/`--port2` flags.
+Hot-plugging a device mid-recording closes that port's open holds; the
+device change itself has no directive and is not replayed.
+
+## A deterministic guest clock
+
+The emulated core never depends on the host clock -- with one deliberate
+exception: the battery-backed RTC mirrors host time on machines that have
+one, and an RTC-less machine boots to whatever date the guest OS invents.
+Both are wrong for testing time-dependent guest software. `--rtc-time`
+(or `[machine] rtc_time`) fits a battery clock seeded to a fixed instant --
+Unix seconds or `"YYYY-MM-DD HH:MM:SS"` -- that then ticks in *emulated*
+time, so every run boots to the same time and reads the same clock at the
+same emulated instant, on any host. `--rtc-frozen` stops it entirely.
+
+```sh
+# Validate a TOTP generator against an RFC 6238 vector time: the guest
+# boots with the clock at 2005-03-18 01:58:29 UTC (unix 1111111109),
+# deterministically, on every run.
+./target/release/copperline --config auth.toml --noaudio \
+  --rtc-time 1111111109 \
+  --screenshot-after 45 /tmp/code.png
+```
+
+Kickstart 2.0+ loads system time from the battery clock at boot on its
+own; Kickstart 1.3 needs `SetClock LOAD` in the startup-sequence. A
+[control-protocol](../debugger/control) session can also inspect, move,
+freeze, and resume the clock mid-run with `rtc.get` / `rtc.set`.
 
 ## Audio capture
 
@@ -158,6 +216,20 @@ exclusive with anything that needs a window or scheduled work --
 `--profile-live-audio`, `--record-input`, scripted input, and scheduled
 disk inserts are all rejected. `--bench-until` is an accepted alias.
 
+## Live control
+
+Scripted flags fix the whole run in advance. For a tool that needs to
+inspect, decide, and steer mid-session -- set a breakpoint, resume,
+rewind, inject input, capture the screen -- run the
+[control protocol](../debugger/control) instead: `--control ADDR` serves
+a headless machine over JSON-RPC (with `--control-token` /
+`--control-info` for the auth handoff), `--control-gui ADDR` attaches
+the same server to a normal windowed session, and the bundled
+`copperline-ctl` drives either from the shell. `--record-input` works
+with `--control` too: injected input is journaled into the same
+`.clscript` format, so an interactive control session replays
+deterministically.
+
 ## Investigating a run
 
 The [headless debugger](../debugger/headless) layers on top of any of
@@ -171,6 +243,12 @@ COPPERLINE_DBG_BREAK=C033C2 COPPERLINE_DBG_DUMP=C09580:4 \
 ./target/release/copperline --config copperline.example.toml --noaudio \
   --screenshot-after 30 /tmp/out.png
 ```
+
+For chip-bus timing questions, the [waveform export](../debugger/waveform)
+records a trigger-based VCD trace of the internal chipset signals during
+the same kind of run (`--waveform out.vcd --wave-trigger pc=0xC033C2
+--wave-duration 20000cck`, with `--wave-signals` selecting the signal
+groups) for viewing in GTKWave.
 
 ## The vAmigaTS compatibility suite
 

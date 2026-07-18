@@ -35,7 +35,13 @@
     <loc>http://localhost:3000/reverse</loc>
   </url>
   <url>
+    <loc>http://localhost:3000/waveform</loc>
+  </url>
+  <url>
     <loc>http://localhost:3000/gdb</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/control</loc>
   </url>
   <url>
     <loc>http://localhost:3000/workflows</loc>
