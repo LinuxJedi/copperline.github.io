@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projects - Copperline</title>
+<meta name="description" content="External projects built with or around Copperline, the cycle-driven Amiga emulator written in Rust.">
+<meta name="theme-color" content="#0a0d16">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Projects using Copperline">
+<meta property="og:description" content="External projects built with or around Copperline, the cycle-driven Amiga emulator written in Rust.">
+<meta property="og:url" content="https://copperline.dev/projects/">
+<meta property="og:image" content="https://copperline.dev/assets/shot-aga.png">
+
+<link rel="icon" href="../favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="../favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="alternate" type="application/rss+xml" title="Copperline News" href="https://copperline.dev/news/feed.xml">
+
+<link rel="preload" href="../assets/fonts/ibm-plex-sans-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/chakra-petch-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/ibm-plex-mono-400.woff2" as="font" type="font/woff2" crossorigin>
+
+<link rel="stylesheet" href="../style.css">
+<script data-goatcounter="https://linuxjedi.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</head>
+<body>
+
+<div class="scanlines" aria-hidden="true"></div>
+
+<header class="nav">
+  <a class="nav__brand" href="../">
+    <img src="../assets/copperline-icon.png" alt="" width="34" height="34">
+    <span>Copperline</span>
+  </a>
+  <nav class="nav__links">
+    <a href="../">Home</a>
+    <a href="../news/">News</a>
+    <a href="../try/">Try</a>
+    <a href="../docs/">Docs</a>
+    <a href="../#download">Download</a>
+    <a class="nav__gh" href="https://github.com/LinuxJedi/Copperline" target="_blank" rel="noopener">GitHub</a>
+  </nav>
+</header>
+
+<main>
+  <section class="section">
+    <div class="section__head">
+      <span class="kicker">// projects</span>
+      <h2>Projects using Copperline</h2>
+      <p>Things other people have built with or around Copperline. These are
+         independent projects with their own maintainers, so issues and pull
+         requests belong with them. Built something yourself? Open an issue on
+         the <a href="https://github.com/LinuxJedi/copperline.github.io/issues" target="_blank" rel="noopener">site repository</a>
+         and I'll add it here.</p>
+    </div>
+
+    <ul class="news-list">
+      <li class="news-list__item">
+        <span class="news-list__date">by Simon Dick</span>
+        <h2><a href="https://github.com/sidick/copperline-docker" target="_blank" rel="noopener">copperline-docker</a></h2>
+        <p>The browser build of Copperline, self-hosted: a single Docker
+           container that compiles the WebAssembly bundle and serves it with
+           nginx. Pre-built multi-arch images (amd64 / arm64) are on GHCR -
+           <code>docker run</code>, open localhost:8080, and it boots the
+           bundled AROS ROM. Mount a host directory into the container and it
+           serves your own Kickstart and disk images to the emulator by URL.</p>
+        <a class="news-list__more" href="https://github.com/sidick/copperline-docker" target="_blank" rel="noopener">view on GitHub &gt;</a>
+      </li>
+    </ul>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="footer__inner">
+    <img src="../assets/copperline-icon.png" alt="" width="40" height="40" class="footer__icon">
+    <div class="footer__cols">
+      <p class="footer__lic">
+        Copperline is free software under the
+        <a href="https://github.com/LinuxJedi/Copperline/blob/main/LICENSE" target="_blank" rel="noopener">GNU GPL v3</a>.
+      </p>
+      <p class="footer__colophon">
+        This site is hand-written HTML and CSS. No trackers, no analytics, no cookies,
+        no CDNs - even the fonts are served from here.
+      </p>
+    </div>
+    <nav class="footer__links">
+      <a href="../news/">News</a>
+      <a href="../news/feed.xml">RSS</a>
+      <a href="https://github.com/LinuxJedi/Copperline" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </div>
+</footer>
+
+</body>
+</html>
