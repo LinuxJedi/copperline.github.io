@@ -105,6 +105,14 @@ export class WebEmu {
         return ret === 0xFFFFFF ? undefined : ret;
     }
     /**
+     * Current floppy drive speed value (percentage, or 0 for turbo).
+     * @returns {number}
+     */
+    floppy_speed() {
+        const ret = wasm.webemu_floppy_speed(this.__wbg_ptr);
+        return ret;
+    }
+    /**
      * Hard-disk activity LED, or undefined on machines without a disk
      * controller (the page hides the LED).
      * @returns {boolean | undefined}
@@ -323,6 +331,16 @@ export class WebEmu {
      */
     set_floppy_sounds_volume(percent) {
         wasm.webemu_set_floppy_sounds_volume(this.__wbg_ptr, percent);
+    }
+    /**
+     * Emulated floppy drive speed (the desktop's `[floppy] speed`): a
+     * data-rate percentage of 100/200/400/800, or 0 for turbo, where disk
+     * DMA transfers complete almost instantly. Other values fall back to
+     * 100. Applies immediately; drive mechanics stay at real speed.
+     * @param {number} percent
+     */
+    set_floppy_speed(percent) {
+        wasm.webemu_set_floppy_speed(this.__wbg_ptr, percent);
     }
     /**
      * Port-2 digital joystick state (the page's keyboard-joystick mapping,
