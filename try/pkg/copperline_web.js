@@ -39,6 +39,38 @@ export class WebEmu {
         }
     }
     /**
+     * CD activity LED, or undefined on machines without a CD drive.
+     * @returns {boolean | undefined}
+     */
+    cd_led() {
+        const ret = wasm.webemu_cd_led(this.__wbg_ptr);
+        return ret === 0xFFFFFF ? undefined : ret !== 0;
+    }
+    /**
+     * File name of the image in DFn, or undefined when the drive is
+     * empty (so this doubles as the inserted check).
+     * @param {number} drive
+     * @returns {string | undefined}
+     */
+    disk_name(drive) {
+        const ret = wasm.webemu_disk_name(this.__wbg_ptr, drive);
+        let v1;
+        if (ret[0] !== 0) {
+            v1 = getStringFromWasm0(ret[0], ret[1]).slice();
+            wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+        }
+        return v1;
+    }
+    /**
+     * Whether DFn is wired up: DF0 always, DF1-DF3 when configured.
+     * @param {number} drive
+     * @returns {boolean}
+     */
+    drive_connected(drive) {
+        const ret = wasm.webemu_drive_connected(this.__wbg_ptr, drive);
+        return ret !== 0;
+    }
+    /**
      * @param {number} drive
      */
     eject_floppy(drive) {
@@ -53,6 +85,33 @@ export class WebEmu {
     emulated_seconds() {
         const ret = wasm.webemu_emulated_seconds(this.__wbg_ptr);
         return ret;
+    }
+    /**
+     * Floppy activity LED: lit while any drive's motor runs.
+     * @returns {boolean}
+     */
+    fdd_led() {
+        const ret = wasm.webemu_fdd_led(this.__wbg_ptr);
+        return ret !== 0;
+    }
+    /**
+     * Cylinder under the selected floppy drive's head, or undefined when
+     * no drive is selected. The page latches the last value so a track
+     * counter does not flicker between accesses, like the desktop bar.
+     * @returns {number | undefined}
+     */
+    fdd_track() {
+        const ret = wasm.webemu_fdd_track(this.__wbg_ptr);
+        return ret === 0xFFFFFF ? undefined : ret;
+    }
+    /**
+     * Hard-disk activity LED, or undefined on machines without a disk
+     * controller (the page hides the LED).
+     * @returns {boolean | undefined}
+     */
+    hdd_led() {
+        const ret = wasm.webemu_hdd_led(this.__wbg_ptr);
+        return ret === 0xFFFFFF ? undefined : ret !== 0;
     }
     /**
      * Insert a floppy image (ADF/ADZ/DMS/extended ADF, optionally
@@ -132,6 +191,16 @@ export class WebEmu {
         this.__wbg_ptr = ret[0];
         WebEmuFinalization.register(this, this.__wbg_ptr, this);
         return this;
+    }
+    /**
+     * Power LED, following CIA-A's /LED output like the desktop status
+     * bar's LED block. The front-panel getters below are cheap enough to
+     * poll once per animation frame.
+     * @returns {boolean}
+     */
+    power_led() {
+        const ret = wasm.webemu_power_led(this.__wbg_ptr);
+        return ret !== 0;
     }
     /**
      * Presentation buffer: RGBA bytes in memory order, `present_width() x
