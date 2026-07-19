@@ -191,6 +191,42 @@ export class WebEmu {
         return ret[0] >>> 0;
     }
     /**
+     * Bytes queued by `serial_send` that the guest's UART has not yet
+     * consumed. Flow control: stop reading the socket while this is large.
+     * @returns {number}
+     */
+    serial_input_backlog() {
+        const ret = wasm.webemu_serial_input_backlog(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * Queue received bytes for Paula's serial receiver (the page's
+     * socket -> the guest). The queue is unbounded and the UART consumes it
+     * at the emulated baud rate, so pace large transfers with
+     * `serial_input_backlog` instead of pushing megabytes at once.
+     * @param {Uint8Array} bytes
+     */
+    serial_send(bytes) {
+        const ptr0 = passArray8ToWasm0(bytes, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.webemu_serial_send(this.__wbg_ptr, ptr0, len0);
+    }
+    /**
+     * Drain everything the guest transmitted on the serial port since the
+     * last call (the guest -> the page's socket). Call once per animation
+     * frame, like `take_audio`; output is bounded, and anything a
+     * non-draining page lets pile up past that bound is dropped oldest
+     * first. This also carries boot-ROM/OS debug output, so a page may log
+     * it even with no socket connected.
+     * @returns {Uint8Array}
+     */
+    serial_take() {
+        const ret = wasm.webemu_serial_take(this.__wbg_ptr);
+        var v1 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+        return v1;
+    }
+    /**
      * The CD32 pad's extra buttons on port 2 (red/blue arrive through
      * `set_joystick_port2` as fire/button2).
      * @param {boolean} play
@@ -201,6 +237,23 @@ export class WebEmu {
      */
     set_cd32_buttons_port2(play, rwd, ffw, green, yellow) {
         wasm.webemu_set_cd32_buttons_port2(this.__wbg_ptr, play, rwd, ffw, green, yellow);
+    }
+    /**
+     * Enable or mute the synthesized floppy drive sounds (motor hum,
+     * head-step clicks, read hiss). On by default, like the desktop's
+     * `[audio] floppy_sounds` knob.
+     * @param {boolean} enabled
+     */
+    set_floppy_sounds(enabled) {
+        wasm.webemu_set_floppy_sounds(this.__wbg_ptr, enabled);
+    }
+    /**
+     * Drive-sound level, 0-100, relative to Paula's output (the desktop's
+     * `[audio] floppy_sounds_volume`).
+     * @param {number} percent
+     */
+    set_floppy_sounds_volume(percent) {
+        wasm.webemu_set_floppy_sounds_volume(this.__wbg_ptr, percent);
     }
     /**
      * Port-2 digital joystick state (the page's keyboard-joystick mapping,
@@ -349,6 +402,11 @@ function addToExternrefTable0(obj) {
 function getArrayF32FromWasm0(ptr, len) {
     ptr = ptr >>> 0;
     return getFloat32ArrayMemory0().subarray(ptr / 4, ptr / 4 + len);
+}
+
+function getArrayU8FromWasm0(ptr, len) {
+    ptr = ptr >>> 0;
+    return getUint8ArrayMemory0().subarray(ptr / 1, ptr / 1 + len);
 }
 
 let cachedDataViewMemory0 = null;
