@@ -316,6 +316,7 @@ async function boot() {
     pendingDisk = null;
     machine.set_volume_percent(Number($('vol').value));
     if (floppySoundsToggle) machine.set_floppy_sounds(floppySoundsToggle.checked);
+    else if (configFloppySounds !== null) machine.set_floppy_sounds(configFloppySounds);
     if (floppySpeed !== null) machine.set_floppy_speed(floppySpeed);
     emu = machine;
     window.__emu = emu; // for debugging/automation
@@ -425,6 +426,23 @@ document.addEventListener('visibilitychange', () => {
 // the telnet layer, for gateways to non-telnet services) are optional too.
 // Pages without the elements are untouched - the pump still drains the
 // guest's bounded serial buffer every frame, it just goes nowhere.
+//
+// Telnet-mode connections follow the guest's DTR line the way a modem
+// follows its terminal. Dialling before the terminal is up would scroll the
+// BBS greeting into a UART nobody is reading and leak boot-ROM chatter to
+// the BBS as phantom keypresses (a stray newline at a login prompt starts
+// the new-user flow), so Connect defers the dial until the terminal has
+// opened the serial port, and a live session hangs up when the guest drops
+// the line (terminal exit, reboot, power cycle) - then re-arms, so the
+// next boot of the terminal reconnects by itself. Raw mode is ungated, for
+// byte services and guests that never drive CIA-B DTR.
+//
+// The dial waits for the line to be READY (DTR asserted) and QUIET (no
+// guest transmit) continuously for a guard period, not for a mere DTR
+// edge: AROS raises DTR for a couple of seconds during early boot while
+// its kernel debug output streams to the serial port, and dialling into
+// that window is exactly the reported failure. The debug burst fails both
+// conditions; a terminal holds DTR silently and passes.
 
 const serialUrlInput = $('serial-url');
 const serialConnectBtn = $('serial-connect');
@@ -433,6 +451,21 @@ const serialRawToggle = $('serial-raw');
 
 let serialWs = null;
 let serialTelnet = null;
+// Connect clicked before the guest's line was ready: dial once it is.
+let serialWaitingDtr = false;
+// The open session is DTR-gated (telnet mode): drop of the line hangs up.
+let serialDtrGated = false;
+// Emulated-time instant the guest's line last became ready-and-quiet;
+// pushed forward by every disqualifier (DTR down, guest transmit) the
+// pump sees. Emulated seconds, not wall time: in a throttled background
+// tab the machine runs far slower than the wall clock, and a wall-time
+// guard would fire inside a stretched boot transient.
+let serialLineReadySince = 0;
+// The line must hold ready-and-quiet this long (emulated seconds) before
+// a deferred dial fires. The AROS boot-debug burst holds DTR for ~1.75s
+// while transmitting; 3s of held silence clears it with margin and still
+// feels immediate once a terminal is really up.
+const SERIAL_DIAL_GUARD_EMU_S = 3.0;
 // Inbound chunks the guest's UART has not had room for yet. The UART
 // consumes at the emulated baud rate, so a fast sender (a file download)
 // backlogs here rather than ballooning inside the wasm heap.
@@ -441,11 +474,33 @@ let serialRxQueue = [];
 // the queue above absorbs the difference, a frame at a time.
 const SERIAL_BACKLOG_LIMIT = 32768;
 
+// The guest's view of the serial DTR line. A powered-off machine has the
+// line down; a wasm bundle older than serial_dtr() reports it up, which
+// disengages the gate (see serialLineSettled) rather than waiting forever.
+function guestDtr() {
+  if (!emu) return false;
+  if (typeof emu.serial_dtr !== 'function') return true;
+  return emu.serial_dtr();
+}
+
+function emuSeconds() {
+  return emu && typeof emu.emulated_seconds === 'function' ? emu.emulated_seconds() : 0;
+}
+
+// Ready-and-quiet for the full guard period, judged from what the pump
+// has observed. Only meaningful while the machine is emulating, which is
+// when the pump keeps serialLineReadySince honest.
+function serialLineSettled() {
+  if (!emu) return false;
+  if (typeof emu.serial_dtr !== 'function') return true; // pre-gate wasm
+  return emu.serial_dtr() && emuSeconds() - serialLineReadySince >= SERIAL_DIAL_GUARD_EMU_S;
+}
+
 function setSerialStatus(text) {
   if (serialStatus) serialStatus.textContent = text;
 }
 
-function serialDisconnect(status) {
+function serialTeardown() {
   if (serialWs) {
     // Neuter the handlers first: close() fires onclose asynchronously, and
     // a stale handler would clobber the status of a connection made later.
@@ -454,27 +509,47 @@ function serialDisconnect(status) {
     serialWs = null;
   }
   serialTelnet = null;
+  serialDtrGated = false;
   serialRxQueue = [];
+}
+
+function serialDisconnect(status) {
+  serialTeardown();
+  serialWaitingDtr = false;
   if (serialConnectBtn) serialConnectBtn.textContent = 'Connect';
   setSerialStatus(status);
 }
 
-function serialConnect() {
+// DTR dropped mid-session: hang up like a modem losing its terminal, but
+// keep the visitor's intent armed - when the line settles again (the
+// terminal is back after a reboot) the dial repeats by itself.
+function serialHangup() {
+  serialTeardown();
+  serialWaitingDtr = true;
+  if (serialConnectBtn) serialConnectBtn.textContent = 'Cancel';
+  setSerialStatus('terminal closed the serial port - reconnects when it is back...');
+}
+
+// Open the socket now, with whatever is in the URL box. Reached directly
+// from a Connect click when the guest is ready (or in raw mode), or from
+// the pump when a deferred connect sees DTR rise.
+function serialOpen() {
   const url = serialUrlInput?.value?.trim();
   if (!url) {
-    setSerialStatus('enter a ws:// or wss:// gateway URL');
+    serialDisconnect('enter a ws:// or wss:// gateway URL');
     return;
   }
   let ws;
   try {
     ws = new WebSocket(url);
   } catch (e) {
-    setSerialStatus(`bad URL: ${e.message ?? e}`);
+    serialDisconnect(`bad URL: ${e.message ?? e}`);
     return;
   }
   ws.binaryType = 'arraybuffer';
   serialWs = ws;
   serialTelnet = serialRawToggle?.checked ? null : new TelnetSession();
+  serialDtrGated = serialTelnet !== null;
   serialRxQueue = [];
   if (serialConnectBtn) serialConnectBtn.textContent = 'Disconnect';
   setSerialStatus('connecting...');
@@ -492,9 +567,28 @@ function serialConnect() {
   };
 }
 
+function serialConnect() {
+  const url = serialUrlInput?.value?.trim();
+  if (!url) {
+    setSerialStatus('enter a ws:// or wss:// gateway URL');
+    return;
+  }
+  if (!serialRawToggle?.checked && !serialLineSettled()) {
+    // Telnet mode with no settled terminal yet: arm the deferred dial
+    // instead of connecting into the void. The pump completes it once
+    // the guest's line has been ready and quiet for the guard period.
+    serialWaitingDtr = true;
+    if (serialConnectBtn) serialConnectBtn.textContent = 'Cancel';
+    setSerialStatus('waiting for the terminal - boot the terminal disk, connects when it is ready...');
+    return;
+  }
+  serialOpen();
+}
+
 if (serialConnectBtn) {
   serialConnectBtn.addEventListener('click', () => {
-    if (serialWs) serialDisconnect('disconnected');
+    if (serialWaitingDtr) serialDisconnect('cancelled');
+    else if (serialWs) serialDisconnect('disconnected');
     else serialConnect();
   });
 }
@@ -505,6 +599,26 @@ function pumpSerial() {
   // the guest's bounded output buffer (which also carries boot-ROM debug
   // chatter) never overflows into dropped bytes mid-session.
   const out = emu.serial_take();
+  // Any disqualifier - line down, guest transmit, or the emulated clock
+  // rewinding (a power cycle) - restarts the ready-and-quiet guard clock.
+  // Checked here rather than on a timer because the line can only change
+  // while the machine is emulating, and emulation is what drives this
+  // pump.
+  const nowEmu = emuSeconds();
+  if (!guestDtr() || out.length || nowEmu < serialLineReadySince) {
+    serialLineReadySince = nowEmu;
+  }
+  // Deferred dial: the guest's line has settled, so connect now.
+  if (serialWaitingDtr && serialLineSettled()) {
+    serialWaitingDtr = false;
+    serialOpen();
+  }
+  // Modem-style hangup (and automatic re-arm): the guest dropped DTR, so
+  // the session ends before boot chatter can reach the far end as
+  // phantom input.
+  if (serialDtrGated && serialWs && !guestDtr()) {
+    serialHangup();
+  }
   if (out.length && serialWs?.readyState === WebSocket.OPEN) {
     serialWs.send(serialTelnet ? serialTelnet.send(out) : out);
   }
@@ -515,17 +629,22 @@ function pumpSerial() {
 }
 
 // --- joystick (port 2) -----------------------------------------------------
-// The toggle cycles off -> keys (-> touch on touch screens). Keys is the
-// desktop frontend's FS-UAE-compatible mapping plus left-hand fire keys:
-// cursor keys for directions, Right Ctrl / Right Alt or Left Ctrl for fire,
-// Left Alt for the second button (left-hand fire pairs with the right-hand
-// arrows, and compact keyboards often lack the right-side modifiers), CD32
-// extras on C/X/D/S/Enter/Z/A; while on, these keys drive the port-2
-// joystick instead of reaching the Amiga keyboard. Touch turns the canvas
-// into a pad (see the touch section). The page shell can preset the mode
-// (data-default on the toggle) and ?joy=off|keys|touch overrides per link.
+// The toggle cycles off -> keys -> cd32 (-> touch on touch screens). Keys
+// is a two-button stick, the desktop frontend's FS-UAE-compatible mapping
+// plus left-hand fire keys: cursor keys for directions, Right Ctrl /
+// Right Alt or Left Ctrl for fire, Left Alt for the second button
+// (left-hand fire pairs with the right-hand arrows, and compact keyboards
+// often lack the right-side modifiers). Cd32 adds the pad extras on
+// C/X/D/S/Enter/Z/A. The split matters for typing-heavy guests (a BBS
+// terminal): keys mode leaves Enter and the letters on the Amiga
+// keyboard, so only a CD32 title needs the full capture. While a mode is
+// on, its mapped keys drive the port-2 joystick instead of reaching the
+// Amiga keyboard. Touch turns the canvas into a pad (see the touch
+// section). The page shell can preset the mode (data-default on the
+// toggle, or the config file's "joy") and ?joy=off|keys|cd32|touch
+// overrides per link.
 
-const JOY_KEYS = {
+const JOY_KEYS_TWO_BUTTON = {
   ArrowUp: 'up',
   ArrowDown: 'down',
   ArrowLeft: 'left',
@@ -534,6 +653,9 @@ const JOY_KEYS = {
   AltRight: 'fireAlt',
   ControlLeft: 'fireLCtrl',
   AltLeft: 'blueLAlt',
+};
+const JOY_KEYS_CD32 = {
+  ...JOY_KEYS_TWO_BUTTON,
   KeyC: 'red',
   KeyX: 'blue',
   KeyD: 'green',
@@ -543,7 +665,7 @@ const JOY_KEYS = {
   KeyZ: 'rwd',
   KeyA: 'ffw',
 };
-const JOY_MODES = hasTouch ? ['off', 'keys', 'touch'] : ['off', 'keys'];
+const JOY_MODES = hasTouch ? ['off', 'keys', 'cd32', 'touch'] : ['off', 'keys', 'cd32'];
 let joyMode = 'off';
 const joyHeld = {};
 
@@ -562,8 +684,13 @@ function applyJoystick() {
 
 // Returns true when the key was captured for the joystick.
 function joystickKey(code, pressed) {
-  if (joyMode !== 'keys') return false;
-  const control = JOY_KEYS[code];
+  const map =
+    joyMode === 'keys'
+      ? JOY_KEYS_TWO_BUTTON
+      : joyMode === 'cd32'
+        ? JOY_KEYS_CD32
+        : null;
+  const control = map?.[code];
   if (!control) return false;
   joyHeld[control] = pressed;
   applyJoystick();
@@ -1063,6 +1190,9 @@ $('vol').addEventListener('input', (e) => {
 // Without the element the sounds stay on, as before; the checkbox's
 // initial state is applied at boot, so a shell can default them off.
 const floppySoundsToggle = $('floppy-sounds');
+// The config file's floppy_sounds on a shell without the checkbox: stashed
+// here and applied at boot.
+let configFloppySounds = null;
 floppySoundsToggle?.addEventListener('change', () => {
   if (emu) emu.set_floppy_sounds(floppySoundsToggle.checked);
 });
@@ -1236,21 +1366,25 @@ function updateStatusDisks() {
   }
 }
 
-// --- disk list ---------------------------------------------------------
+// --- disk and Kickstart lists ------------------------------------------
 // Optional in the page shell: a <select id="df0list"> fills itself with
 // the disk images the site serves next to the page and inserts the picked
-// one into DF0 (before boot it queues, like the picker). The folder comes
-// from the select's data-src attribute (default "adf/"), and the list from
+// one into DF0 (before boot it queues, like the picker), and a
+// <select id="kicklist"> does the same for Kickstart ROMs, fitting the
+// picked one like the ROM picker. Each folder comes from the select's
+// data-src attribute (defaults "adf/" and "kick/"), and the list from
 // <folder>/index.json - a JSON array of file names, or of {name, url}
 // objects with URLs relative to the folder. Without a manifest, a server
 // directory listing of the folder (nginx autoindex, Apache, python -m
-// http.server) is scraped for disk-image links instead. An empty or
-// unreachable folder hides the select.
+// http.server) is scraped for links with a matching extension instead.
+// An empty or unreachable folder hides the select.
 
-const diskListSelect = $('df0list');
 const DISK_LIST_EXT = /\.(adf|adz|dms|ipf|scp|zip|gz)$/i;
+// Raw ROM images only: a list pick feeds load_rom directly, which takes
+// uncompressed 256/512 KiB images.
+const KICK_LIST_EXT = /\.(rom|bin)$/i;
 
-async function diskListEntries(folder) {
+async function folderListEntries(folder, extensions) {
   // A manifest wins when the site ships one; a missing or invalid one
   // (fetch error, unparsable JSON, not an array) falls through to the
   // directory listing.
@@ -1292,7 +1426,7 @@ async function diskListEntries(folder) {
       // Only files inside the folder itself; autoindex pages also carry
       // parent-directory and sort links.
       if (url.origin !== folder.origin || !url.pathname.startsWith(folder.pathname)) continue;
-      if (!DISK_LIST_EXT.test(url.pathname)) continue;
+      if (!extensions.test(url.pathname)) continue;
       entries.push({ name: nameFromUrlPath(url.pathname, url.pathname), url: url.href });
     }
     return entries;
@@ -1301,26 +1435,37 @@ async function diskListEntries(folder) {
   }
 }
 
-async function loadDiskList(select) {
+// sameOriginOnly enforces the Kickstart copyright gate at the list level:
+// the folder must be on the page's own site and cross-origin manifest
+// entries are dropped, so the select never offers a ROM that
+// fitRomFromUrl's own gate would refuse pick by pick.
+async function loadFolderList(select, defaultSrc, extensions, placeholder, sameOriginOnly, pick) {
   let folder;
   try {
-    folder = new URL(select.dataset.src || 'adf/', location.href);
+    folder = new URL(select.dataset.src || defaultSrc, location.href);
   } catch {
     select.hidden = true;
     return;
   }
+  if (sameOriginOnly && folder.origin !== location.origin) {
+    select.hidden = true;
+    return;
+  }
   if (!folder.pathname.endsWith('/')) folder.pathname += '/';
-  const entries = await diskListEntries(folder);
+  let entries = await folderListEntries(folder, extensions);
+  if (sameOriginOnly) {
+    entries = entries.filter((entry) => new URL(entry.url).origin === location.origin);
+  }
   if (!entries.length) {
     select.hidden = true;
     return;
   }
   entries.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
   if (!select.options.length) {
-    const placeholder = document.createElement('option');
-    placeholder.value = '';
-    placeholder.textContent = 'DF0 from list...';
-    select.appendChild(placeholder);
+    const option = document.createElement('option');
+    option.value = '';
+    option.textContent = placeholder;
+    select.appendChild(option);
   }
   for (const { name, url } of entries) {
     const option = document.createElement('option');
@@ -1329,11 +1474,22 @@ async function loadDiskList(select) {
     select.appendChild(option);
   }
   select.addEventListener('change', () => {
-    if (select.value) insertDiskFromUrl(select.value);
+    if (select.value) pick(select.value);
   });
 }
 
-if (diskListSelect) loadDiskList(diskListSelect);
+const diskListSelect = $('df0list');
+if (diskListSelect) {
+  loadFolderList(diskListSelect, 'adf/', DISK_LIST_EXT, 'DF0 from list...', false, insertDiskFromUrl);
+}
+
+// The hosted page's server carries no ROMs, so its kick/ folder lists
+// nothing and the select hides; a self-hosted shell that serves its
+// owner's ROMs next to the page gets a one-click ROM chooser.
+const kickListSelect = $('kicklist');
+if (kickListSelect) {
+  loadFolderList(kickListSelect, 'kick/', KICK_LIST_EXT, 'Kickstart from list...', true, fitRomFromUrl);
+}
 
 // Optional in the page shell: older shells have no URL button.
 $('df0url')?.addEventListener('click', () => {
@@ -1479,28 +1635,98 @@ document.addEventListener('drop', (e) => {
 
 bootBtn.addEventListener('click', boot);
 const pageParams = new URLSearchParams(location.search);
-const linkedDisk = pageParams.get('df0');
-if (linkedDisk) insertDiskFromUrl(linkedDisk);
-const linkedKick = pageParams.get('kick');
-if (linkedKick) fitRomFromUrl(linkedKick);
 
-// Starting joystick mode: the page shell's default (data-default on the
-// toggle), overridden per link by ?joy=off|keys|touch. A touch request on
-// a screen without touch falls back to keys, so a game link written for
-// tablets still gets a joystick on a desktop.
-const requestedJoy = (pageParams.get('joy') ?? $('joy').dataset.default ?? '').trim();
-if (requestedJoy && requestedJoy !== joyMode) {
-  if (JOY_MODES.includes(requestedJoy)) setJoyMode(requestedJoy);
-  else if (requestedJoy === 'touch') setJoyMode('keys');
+// --- page configuration file ---------------------------------------------
+// Optional copperline.json next to the page: a site sets its defaults in
+// one hand-editable file instead of touching the shell or this glue. All
+// keys are optional; a missing or invalid file is simply no defaults.
+// Link parameters (?df0=, ?kick=, ?joy=, ?fdspeed=) override the file,
+// and anything the visitor changes by hand wins as usual.
+//
+//   {
+//     "kick": "roms/kick31.rom",     same-origin path, like ?kick=
+//     "df0": "adf/demo.adf",         URL, like ?df0=
+//     "floppy_sounds": false,        preset the drive-sounds toggle
+//     "floppy_speed": 800,           100|200|400|800|0 (0 = turbo)
+//     "joy": "keys",                 off|keys|cd32|touch
+//     "serial_url": "wss://...",     preset the BBS gateway input
+//     "serial_raw": true,            preset the raw checkbox
+//     "autoboot": true               power on once everything is loaded
+//   }
+async function fetchPageConfig() {
+  try {
+    const resp = await fetch('./copperline.json');
+    if (!resp.ok) return {};
+    const cfg = await resp.json();
+    return cfg && typeof cfg === 'object' && !Array.isArray(cfg) ? cfg : {};
+  } catch {
+    return {};
+  }
 }
 
-// Starting floppy speed: the speed select's initial value, overridden
-// per link by ?fdspeed=100|200|400|800|0|turbo. Applied to the machine
-// at boot.
-const requestedSpeed = (pageParams.get('fdspeed') ?? '').trim();
-if (requestedSpeed) {
-  setFloppySpeed(requestedSpeed === 'turbo' ? 0 : Number(requestedSpeed));
-} else {
-  setFloppySpeed(Number(floppySpeedSel.value));
+async function startup() {
+  // The wasm + AROS download starts immediately; the config fetch rides
+  // alongside and its choices land before anything needs them (a config
+  // Kickstart simply replaces the stashed boot ROM when it arrives).
+  const loaded = load();
+  const cfg = await fetchPageConfig();
+
+  if (serialUrlInput && typeof cfg.serial_url === 'string') {
+    serialUrlInput.value = cfg.serial_url;
+  }
+  if (serialRawToggle && typeof cfg.serial_raw === 'boolean') {
+    serialRawToggle.checked = cfg.serial_raw;
+  }
+  if (typeof cfg.floppy_sounds === 'boolean') {
+    if (floppySoundsToggle) floppySoundsToggle.checked = cfg.floppy_sounds;
+    else configFloppySounds = cfg.floppy_sounds;
+  }
+
+  const fetches = [];
+  const linkedDisk =
+    pageParams.get('df0') ?? (typeof cfg.df0 === 'string' ? cfg.df0 : null);
+  if (linkedDisk) fetches.push(insertDiskFromUrl(linkedDisk));
+  const linkedKick =
+    pageParams.get('kick') ?? (typeof cfg.kick === 'string' ? cfg.kick : null);
+  if (linkedKick) fetches.push(fitRomFromUrl(linkedKick));
+
+  // Starting joystick mode: the page shell's default (data-default on the
+  // toggle or the config file), overridden per link by
+  // ?joy=off|keys|cd32|touch. A touch request on a screen without touch
+  // falls back to keys, so a game link written for tablets still gets a
+  // joystick on a desktop.
+  const requestedJoy = (
+    pageParams.get('joy') ??
+    (typeof cfg.joy === 'string' ? cfg.joy : null) ??
+    $('joy').dataset.default ??
+    ''
+  ).trim();
+  if (requestedJoy && requestedJoy !== joyMode) {
+    if (JOY_MODES.includes(requestedJoy)) setJoyMode(requestedJoy);
+    else if (requestedJoy === 'touch') setJoyMode('keys');
+  }
+
+  // Starting floppy speed: the speed select's initial value, overridden by
+  // the config file and per link by ?fdspeed=100|200|400|800|0|turbo.
+  // Applied to the machine at boot.
+  const requestedSpeed = (
+    pageParams.get('fdspeed') ??
+    (typeof cfg.floppy_speed === 'number' ? String(cfg.floppy_speed) : '')
+  ).trim();
+  if (requestedSpeed) {
+    setFloppySpeed(requestedSpeed === 'turbo' ? 0 : Number(requestedSpeed));
+  } else {
+    setFloppySpeed(Number(floppySpeedSel.value));
+  }
+
+  // Autoboot: a page dedicated to one demo or the BBS can land straight in
+  // the machine. Waits for the ROM/disk choices above so the boot never
+  // races its own media; the boot button staying disabled (ROMs failed)
+  // vetoes it. Browsers keep audio locked until a real gesture - the
+  // existing unlock listeners pick that up.
+  if (cfg.autoboot === true) {
+    await Promise.all([loaded, ...fetches]);
+    if (!bootBtn.disabled && !emu) boot();
+  }
 }
-load();
+startup();

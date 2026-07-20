@@ -268,6 +268,20 @@ export class WebEmu {
         return ret[0] >>> 0;
     }
     /**
+     * Whether the guest is asserting the serial port's DTR line (CIA-B PA7
+     * driven low). A terminal raises DTR when it opens the port --
+     * serial.device does it on OpenDevice, hardware-level terminals set the
+     * CIA bit themselves -- and drops it on close and at reset, so this is
+     * the "guest terminal is ready" signal a modem would key off. The page
+     * bridge uses it to defer dialling until the terminal can actually
+     * display the far end's greeting.
+     * @returns {boolean}
+     */
+    serial_dtr() {
+        const ret = wasm.webemu_serial_dtr(this.__wbg_ptr);
+        return ret !== 0;
+    }
+    /**
      * Bytes queued by `serial_send` that the guest's UART has not yet
      * consumed. Flow control: stop reading the socket while this is large.
      * @returns {number}
