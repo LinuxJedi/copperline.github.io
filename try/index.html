@@ -82,15 +82,50 @@
     font-family: "IBM Plex Mono", ui-monospace, monospace;
     font-size: 0.85rem;
   }
+  /* Front-panel strip: try.js fills #ledbar with the PWR/FDD LEDs, track
+     counter and disk names at first boot; until then it stays collapsed. */
+  .try-ledbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.9rem;
+    row-gap: 0.35rem;
+    margin-top: 0.7rem;
+    font: 600 0.8rem "IBM Plex Mono", ui-monospace, monospace;
+    color: rgba(255, 255, 255, 0.75);
+  }
+  .try-ledbar:empty { display: none; }
   .try-controls {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.6rem;
-    align-items: center;
+    gap: 0.55rem;
     margin-top: 0.8rem;
   }
-  .try-controls .btn { cursor: pointer; font-size: 0.92rem; padding: 0.55rem 1rem; }
-  .try-controls input[type="range"] { accent-color: var(--copper); width: 110px; }
+  .try-controls .btn {
+    cursor: pointer;
+    font-size: 0.92rem;
+    padding: 0.55rem 1rem;
+    justify-content: center;
+    white-space: nowrap;
+  }
+  .try-controls .btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+  .try-controls .btn:disabled:hover {
+    transform: none;
+    border-color: var(--line);
+    background: rgba(255, 255, 255, 0.02);
+  }
+  .try-settings {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.9rem;
+    row-gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+  .try-settings input[type="range"] { accent-color: var(--copper); width: 110px; }
   .try-check {
     display: inline-flex;
     align-items: center;
@@ -102,6 +137,15 @@
     user-select: none;
   }
   .try-check input { accent-color: var(--copper); cursor: pointer; }
+  .try-check select {
+    padding: 0.2rem 0.45rem;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid var(--line);
+    background: rgba(10, 13, 22, 0.6);
+    color: var(--ink);
+    font: inherit;
+  }
   #stat {
     margin-left: auto;
     color: var(--ink-mute);
@@ -114,7 +158,24 @@
     color: var(--ink-mute);
     font-size: 0.92rem;
   }
+  /* Phones: the free-wrapping button row turns ragged and can overflow, so
+     switch to an even two-column grid (an odd last button spans the row).
+     The buttons are ordered so the grid pairs related actions. */
   @media (max-width: 700px) {
+    .try-controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+    .try-controls .btn {
+      font-size: 0.9rem;
+      padding: 0.6rem 0.5rem;
+    }
+    .try-controls .btn:last-child:nth-child(odd) { grid-column: 1 / -1; }
+    .try-settings input[type="range"] {
+      flex: 1;
+      min-width: 120px;
+    }
     #stat { margin-left: 0; width: 100%; }
   }
 </style>
@@ -158,16 +219,35 @@
         </div>
       </div>
 
+      <div id="ledbar" class="try-ledbar"></div>
+
       <div class="try-controls">
+        <button class="btn btn--ghost" id="pause">Pause</button>
+        <button class="btn btn--ghost" id="screenshot">Screenshot</button>
+        <button class="btn btn--ghost" id="savestate">Save state</button>
+        <button class="btn btn--ghost" id="loadstate">Load state&hellip;</button>
+        <button class="btn btn--ghost" id="quicksave">Quick save</button>
+        <button class="btn btn--ghost" id="quickload">Quick load</button>
         <label class="btn btn--ghost">Insert DF0&hellip;
           <input id="df0" type="file" accept=".adf,.adz,.dms,.gz,.zip,.ipf,.scp" hidden></label>
         <button class="btn btn--ghost" id="df0url">DF0 from URL&hellip;</button>
+        <button class="btn btn--ghost" id="eject">Eject</button>
         <label class="btn btn--ghost">Load Kickstart&hellip;
           <input id="kick" type="file" accept=".rom,.bin" hidden></label>
-        <button class="btn btn--ghost" id="eject">Eject</button>
         <button class="btn btn--ghost" id="reset">Reset</button>
         <button class="btn btn--ghost" id="joy">Joystick: off</button>
         <button class="btn btn--ghost" id="fullscreen">Fullscreen</button>
+      </div>
+
+      <div class="try-settings">
+        <label class="try-check">Floppy speed
+          <select id="floppy-speed">
+            <option value="100">100%</option>
+            <option value="200">200%</option>
+            <option value="400">400%</option>
+            <option value="800">800%</option>
+            <option value="0">Turbo</option>
+          </select></label>
         <label class="try-check"><input id="floppy-sounds" type="checkbox" checked> Drive sounds</label>
         <input id="vol" type="range" min="0" max="100" value="80" aria-label="Volume">
         <span id="stat"></span>
