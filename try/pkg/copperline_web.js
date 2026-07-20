@@ -171,6 +171,26 @@ export class WebEmu {
         }
     }
     /**
+     * Restore a state produced by `save_state` (or by a desktop build).
+     * The machine rebuilds from the blob, so the fitted ROM and inserted
+     * disks come back with it. A blob that is not a readable state of this
+     * build's format version throws and leaves the running machine
+     * untouched, so a page can offer a load without risking the session.
+     *
+     * Host-side settings do not travel with the state (they are not part of
+     * the machine): a page that keeps its own volume, drive-sound or floppy
+     * speed choices should re-apply them after a load.
+     * @param {Uint8Array} blob
+     */
+    load_state(blob) {
+        const ptr0 = passArray8ToWasm0(blob, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.webemu_load_state(this.__wbg_ptr, ptr0, len0);
+        if (ret[1]) {
+            throw takeFromExternrefTable0(ret[0]);
+        }
+    }
+    /**
      * Mouse buttons: 0 = left, 1 = middle, 2 = right (MouseEvent.button).
      * @param {number} button
      * @param {boolean} pressed
@@ -276,6 +296,24 @@ export class WebEmu {
             throw takeFromExternrefTable0(ret[1]);
         }
         return ret[0] >>> 0;
+    }
+    /**
+     * Snapshot the whole emulated machine (RAM, ROM, chipset, CPU, the
+     * floppy images themselves) into a `.clstate` blob, the same format the
+     * desktop builds write, so a state saved here loads there and back. The
+     * page decides where it goes: a download, IndexedDB, anywhere it can
+     * keep bytes. Call between frames -- outside `run`, which every
+     * JS-facing method is by construction.
+     * @returns {Uint8Array}
+     */
+    save_state() {
+        const ret = wasm.webemu_save_state(this.__wbg_ptr);
+        if (ret[3]) {
+            throw takeFromExternrefTable0(ret[2]);
+        }
+        var v1 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+        return v1;
     }
     /**
      * Whether the guest is asserting the serial port's DTR line (CIA-B PA7
