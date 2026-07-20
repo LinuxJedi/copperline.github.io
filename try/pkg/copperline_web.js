@@ -250,6 +250,16 @@ export class WebEmu {
         }
     }
     /**
+     * Forget the wall-clock/emulated-time pairing, so the next `run` starts
+     * pacing from now instead of trying to make up the gap. A page calls
+     * this when resuming from a pause: without it the first tick after the
+     * pause sees a wall clock that ran on while the guest did not, and
+     * sprints through frames until the catch-up clamp trips.
+     */
+    resync_clock() {
+        wasm.webemu_resync_clock(this.__wbg_ptr);
+    }
+    /**
      * Step emulated time up to the wall clock (`now_ms` is
      * `performance.now()`), at most `max_frames` PAL frames per call, then
      * render the latest completed frame into the presentation buffer.
@@ -318,8 +328,20 @@ export class WebEmu {
         return v1;
     }
     /**
-     * The CD32 pad's extra buttons on port 2 (red/blue arrive through
-     * `set_joystick_port2` as fire/button2).
+     * The CD32 pad's extra buttons on either port (red/blue arrive through
+     * `set_joystick_port` as fire/button2).
+     * @param {number} port
+     * @param {boolean} play
+     * @param {boolean} rwd
+     * @param {boolean} ffw
+     * @param {boolean} green
+     * @param {boolean} yellow
+     */
+    set_cd32_buttons_port(port, play, rwd, ffw, green, yellow) {
+        wasm.webemu_set_cd32_buttons_port(this.__wbg_ptr, port, play, rwd, ffw, green, yellow);
+    }
+    /**
+     * Port-2 CD32 buttons. Superseded by `set_cd32_buttons_port`.
      * @param {boolean} play
      * @param {boolean} rwd
      * @param {boolean} ffw
@@ -357,9 +379,26 @@ export class WebEmu {
         wasm.webemu_set_floppy_speed(this.__wbg_ptr, percent);
     }
     /**
-     * Port-2 digital joystick state (the page's keyboard-joystick mapping,
-     * or a Gamepad API bridge). Marks port 2 as a joystick; `fire` is the
-     * red/primary button, `button2` the blue/second button.
+     * Digital joystick state for either port (1 or 2): the page's
+     * keyboard-joystick mapping, or a Gamepad API bridge. Marks the port as
+     * a joystick, which is what makes two-player work -- a second pad takes
+     * port 1, exactly like unplugging the mouse to plug a stick in. `fire`
+     * is the red/primary button, `button2` the blue/second button. Any port
+     * number other than 1 means port 2, matching the core's convention.
+     * @param {number} port
+     * @param {boolean} up
+     * @param {boolean} down
+     * @param {boolean} left
+     * @param {boolean} right
+     * @param {boolean} fire
+     * @param {boolean} button2
+     */
+    set_joystick_port(port, up, down, left, right, fire, button2) {
+        wasm.webemu_set_joystick_port(this.__wbg_ptr, port, up, down, left, right, fire, button2);
+    }
+    /**
+     * Port-2 joystick state. Superseded by `set_joystick_port`, kept
+     * because it is the published page-glue API.
      * @param {boolean} up
      * @param {boolean} down
      * @param {boolean} left
@@ -369,6 +408,20 @@ export class WebEmu {
      */
     set_joystick_port2(up, down, left, right, fire, button2) {
         wasm.webemu_set_joystick_port2(this.__wbg_ptr, up, down, left, right, fire, button2);
+    }
+    /**
+     * Plug a device into a port: "mouse", "joystick", "cd32", "analogue",
+     * or "none". Unplugging releases every line the old device drove, so a
+     * page whose gamepad goes away restores the mouse on port 1 with
+     * `set_port_device(1, "mouse")` rather than leaving a stuck stick.
+     * Unknown names are ignored.
+     * @param {number} port
+     * @param {string} device
+     */
+    set_port_device(port, device) {
+        const ptr0 = passStringToWasm0(device, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.webemu_set_port_device(this.__wbg_ptr, port, ptr0, len0);
     }
     /**
      * @param {number} percent
