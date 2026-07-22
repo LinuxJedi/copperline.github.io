@@ -448,6 +448,15 @@ export class WebEmu {
         wasm.webemu_set_joystick_port2(this.__wbg_ptr, up, down, left, right, fire, button2);
     }
     /**
+     * Average the left and right channels into both outputs (the desktop's
+     * `[audio] channel_mode = "mono"`). Off by default: Paula's hardware
+     * panning, with two channels on each side.
+     * @param {boolean} enabled
+     */
+    set_mono_audio(enabled) {
+        wasm.webemu_set_mono_audio(this.__wbg_ptr, enabled);
+    }
+    /**
      * Plug a device into a port: "mouse", "joystick", "cd32", "analogue",
      * or "none". Unplugging releases every line the old device drove, so a
      * page whose gamepad goes away restores the mouse on port 1 with
