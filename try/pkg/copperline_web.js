@@ -191,6 +191,56 @@ export class WebEmu {
         }
     }
     /**
+     * The running machine's profile name ("A500", "A1200", ...), or
+     * undefined for a machine no profile describes -- the model-less
+     * default constructor's machine, or a custom-shaped machine restored
+     * from a save state. Follows `load_state`, so a page can re-point its
+     * machine select at what a state brought back.
+     * @returns {string | undefined}
+     */
+    machine_model() {
+        const ret = wasm.webemu_machine_model(this.__wbg_ptr);
+        let v1;
+        if (ret[0] !== 0) {
+            v1 = getStringFromWasm0(ret[0], ret[1]).slice();
+            wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+        }
+        return v1;
+    }
+    /**
+     * One-line description of the running machine for bug reports and
+     * diagnostics: profile, CPU, chipset, RAM sizes, and the fitted ROM's
+     * fingerprint. Tracks ROM swaps and state loads.
+     * @returns {string}
+     */
+    machine_summary() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.webemu_machine_summary(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
+     * The machine profiles the page's machine select offers, in menu
+     * order. A vetted subset of what the constructor accepts: every model
+     * here boots the bundled AROS ROM (or a plain Kickstart) with nothing
+     * but a floppy, so the page can offer it unconditionally. The page
+     * builds its select from this list, which is also its feature test --
+     * older bundles have no `models` and the select stays hidden.
+     * @returns {string[]}
+     */
+    static models() {
+        const ret = wasm.webemu_models();
+        var v1 = getArrayJsValueFromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v1;
+    }
+    /**
      * Mouse buttons: 0 = left, 1 = middle, 2 = right (MouseEvent.button).
      * @param {number} button
      * @param {boolean} pressed
@@ -208,11 +258,21 @@ export class WebEmu {
         wasm.webemu_mouse_delta(this.__wbg_ptr, dx, dy);
     }
     /**
-     * Build the default machine (the A500 AROS profile of the desktop
-     * launcher) with a placeholder ROM; `load_rom` supplies the real one.
+     * Build a machine with a placeholder ROM; `load_rom` supplies the real
+     * one. `model` picks the machine profile by name ("A500", "A1200", ...)
+     * exactly as the desktop's `--model` flag does; omitted or empty, the
+     * default machine is the A500 of the desktop launcher, so pages built
+     * against the model-less constructor keep booting what they always did.
+     * `models` lists the profiles the hosted page offers; any name the
+     * desktop flag takes is accepted here, but the ones outside that list
+     * may need pieces a browser page cannot supply (CDTV/CD32 want an
+     * extended ROM and a CD). An unknown name throws.
+     * @param {string | null} [model]
      */
-    constructor() {
-        const ret = wasm.webemu_new();
+    constructor(model) {
+        var ptr0 = isLikeNone(model) ? 0 : passStringToWasm0(model, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        var len0 = WASM_VECTOR_LEN;
+        const ret = wasm.webemu_new(ptr0, len0);
         if (ret[2]) {
             throw takeFromExternrefTable0(ret[1]);
         }
@@ -603,6 +663,17 @@ function addToExternrefTable0(obj) {
 function getArrayF32FromWasm0(ptr, len) {
     ptr = ptr >>> 0;
     return getFloat32ArrayMemory0().subarray(ptr / 4, ptr / 4 + len);
+}
+
+function getArrayJsValueFromWasm0(ptr, len) {
+    ptr = ptr >>> 0;
+    const mem = getDataViewMemory0();
+    const result = [];
+    for (let i = ptr; i < ptr + 4 * len; i += 4) {
+        result.push(wasm.__wbindgen_externrefs.get(mem.getUint32(i, true)));
+    }
+    wasm.__externref_drop_slice(ptr, len);
+    return result;
 }
 
 function getArrayU8FromWasm0(ptr, len) {
