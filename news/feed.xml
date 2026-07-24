@@ -8,6 +8,14 @@
   <atom:link href="https://copperline.dev/news/feed.xml" rel="self" type="application/rss+xml"/>
 
   <item>
+    <title>Copperline moves to its own GitHub organisation</title>
+    <link>https://copperline.dev/news/copperline-github-org.html</link>
+    <guid>https://copperline.dev/news/copperline-github-org.html</guid>
+    <pubDate>Fri, 24 Jul 2026 09:12:41 +0000</pubDate>
+    <description>The repositories have moved from my personal LinuxJedi account to a new GitHub organisation, CopperlineHQ, because Copperline is becoming a community bigger than just me. Repository names are unchanged, the old URLs keep redirecting for the foreseeable future, and a Discord server for development discussion is on the way.</description>
+  </item>
+
+  <item>
     <title>Copperline 0.12.0: the browser build and the big boxes</title>
     <link>https://copperline.dev/news/copperline-0-12-0.html</link>
     <guid>https://copperline.dev/news/copperline-0-12-0.html</guid>
@@ -41,7 +49,7 @@
 
   <item>
     <title>Copperline 0.8.0</title>
-    <link>https://github.com/LinuxJedi/Copperline/releases/tag/v0.8.0</link>
+    <link>https://github.com/CopperlineHQ/Copperline/releases/tag/v0.8.0</link>
     <guid>https://github.com/LinuxJedi/Copperline/releases/tag/v0.8.0</guid>
     <pubDate>Sat, 27 Jun 2026 09:17:08 +0000</pubDate>
     <description>The no-config machine launcher, external WASM Zorro board plugins, A2065 Ethernet with a loopback backend, and a long list of sprite, Denise and bitplane timing fixes.</description>
@@ -49,7 +57,7 @@
 
   <item>
     <title>Copperline 0.7.0</title>
-    <link>https://github.com/LinuxJedi/Copperline/releases/tag/v0.7.0</link>
+    <link>https://github.com/CopperlineHQ/Copperline/releases/tag/v0.7.0</link>
     <guid>https://github.com/LinuxJedi/Copperline/releases/tag/v0.7.0</guid>
     <pubDate>Thu, 25 Jun 2026 06:40:37 +0000</pubDate>
     <description>Expanded machine profiles, conditional and counted breakpoints, warp-speed frame skipping, and the first macOS .dmg release builds.</description>

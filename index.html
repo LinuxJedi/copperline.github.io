@@ -49,7 +49,7 @@
     <a href="docs/">Docs</a>
     <a href="news/">News</a>
     <a href="projects/">Projects</a>
-    <a class="nav__gh" href="https://github.com/LinuxJedi/Copperline" target="_blank" rel="noopener">GitHub</a>
+    <a class="nav__gh" href="https://github.com/CopperlineHQ/Copperline" target="_blank" rel="noopener">GitHub</a>
   </nav>
 </header>
 
@@ -82,7 +82,7 @@
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
           Try in your browser
         </a>
-        <a class="btn btn--ghost" href="https://github.com/LinuxJedi/Copperline" target="_blank" rel="noopener">
+        <a class="btn btn--ghost" href="https://github.com/CopperlineHQ/Copperline" target="_blank" rel="noopener">
           View source
         </a>
       </div>
@@ -421,7 +421,7 @@
 
         <p class="debugger__note">There is also a headless "last writer" reverse watchpoint
            for automated root-cause hunts. See the
-           <a href="https://github.com/LinuxJedi/Copperline/blob/main/docs/debugger/reverse.md" target="_blank" rel="noopener">reverse-debugging guide</a>.</p>
+           <a href="https://github.com/CopperlineHQ/Copperline/blob/main/docs/debugger/reverse.md" target="_blank" rel="noopener">reverse-debugging guide</a>.</p>
       </div>
     </div>
 
@@ -588,14 +588,14 @@ copperline game.adf <span class="c-flag">--script</span> run.clscript <span clas
     </ul>
 
     <p class="hardware__note">
-      A vendored pure-Rust <a href="https://github.com/LinuxJedi/Copperline/tree/main/crates/m68k" target="_blank" rel="noopener">m68k</a>
+      A vendored pure-Rust <a href="https://github.com/CopperlineHQ/Copperline/tree/main/crates/m68k" target="_blank" rel="noopener">m68k</a>
       core drives the CPU, with 68000 cycle counts validated against the TomHarte
       SingleStepTests to within about a percent. A bootable timing-test disk cross-checks
       chip-bus timing against real hardware and other emulators, a golden-render probe
       suite compares chipset timing output pixel-for-pixel on every CI run, and the
       vAmigaTS suite runs as a compatibility regression. The detailed architecture and
       timing model live in the
-      <a href="https://github.com/LinuxJedi/Copperline/tree/main/docs" target="_blank" rel="noopener">internals docs</a>.
+      <a href="https://github.com/CopperlineHQ/Copperline/tree/main/docs" target="_blank" rel="noopener">internals docs</a>.
     </p>
   </section>
 
@@ -680,7 +680,7 @@ copperline game.adf <span class="c-flag">--script</span> run.clscript <span clas
          Windows build available. Every build ships the open-source AROS boot ROM, so it runs
          out of the box with no Kickstart required.</p>
 
-      <a class="btn btn--primary btn--big" href="https://github.com/LinuxJedi/Copperline/releases/latest" target="_blank" rel="noopener">
+      <a class="btn btn--primary btn--big" href="https://github.com/CopperlineHQ/Copperline/releases/latest" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 3v10.5l3.3-3.3 1.4 1.4L12 17l-4.7-5.4 1.4-1.4L12 13.5V3h0zM5 19h14v2H5z"/></svg>
         Download the latest release
       </a>
@@ -715,7 +715,7 @@ copperline game.adf <span class="c-flag">--script</span> run.clscript <span clas
           <div class="codeblock" role="group" aria-label="Install with Homebrew">
             <div class="codeblock__bar"><span></span><span></span><span></span> or install with homebrew</div>
             <pre><code><span class="c-comment"># tap the repository and install the latest release</span>
-brew tap LinuxJedi/copperline https://github.com/LinuxJedi/Copperline
+brew tap CopperlineHQ/copperline https://github.com/CopperlineHQ/Copperline
 brew install copperline
 
 <span class="c-comment"># or build the latest development version from main</span>
@@ -740,7 +740,7 @@ chmod +x Copperline-<span class="relver">0.12.0</span>-x86_64.AppImage
           <div class="codeblock" role="group" aria-label="Install with Homebrew on Linux">
             <div class="codeblock__bar"><span></span><span></span><span></span> or install with homebrew</div>
             <pre><code><span class="c-comment"># with Homebrew on Linux, tap the repository and install</span>
-brew tap LinuxJedi/copperline https://github.com/LinuxJedi/Copperline
+brew tap CopperlineHQ/copperline https://github.com/CopperlineHQ/Copperline
 brew install copperline
 
 <span class="c-comment"># or build the latest development version from main</span>
@@ -763,7 +763,7 @@ copperline.exe <span class="c-flag">--config</span> copperline.toml</code></pre>
       <div class="codeblock" role="group" aria-label="Build from source">
         <div class="codeblock__bar"><span></span><span></span><span></span> build from source</div>
         <pre><code><span class="c-comment"># clone and build (release - debug is too slow for real-time)</span>
-git clone https://github.com/LinuxJedi/Copperline.git
+git clone https://github.com/CopperlineHQ/Copperline.git
 cd Copperline
 cargo build <span class="c-flag">--release</span>
 
@@ -895,7 +895,7 @@ cargo build <span class="c-flag">--release</span>
     <div class="footer__cols">
       <p class="footer__lic">
         Copperline is free software under the
-        <a href="https://github.com/LinuxJedi/Copperline/blob/main/LICENSE" target="_blank" rel="noopener">GNU GPL v3</a>.
+        <a href="https://github.com/CopperlineHQ/Copperline/blob/main/LICENSE" target="_blank" rel="noopener">GNU GPL v3</a>.
         The vendored m68k core retains its own MIT license.
       </p>
       <p class="footer__tm">
@@ -912,9 +912,9 @@ cargo build <span class="c-flag">--release</span>
       <a href="news/">News</a>
       <a href="news/feed.xml">RSS</a>
       <a href="projects/">Projects</a>
-      <a href="https://github.com/LinuxJedi/Copperline" target="_blank" rel="noopener">GitHub</a>
-      <a href="https://github.com/LinuxJedi/Copperline/releases/latest" target="_blank" rel="noopener">Releases</a>
-      <a href="https://github.com/LinuxJedi/Copperline/tree/main/docs" target="_blank" rel="noopener">Docs</a>
+      <a href="https://github.com/CopperlineHQ/Copperline" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/CopperlineHQ/Copperline/releases/latest" target="_blank" rel="noopener">Releases</a>
+      <a href="https://github.com/CopperlineHQ/Copperline/tree/main/docs" target="_blank" rel="noopener">Docs</a>
     </nav>
   </div>
 </footer>
@@ -977,7 +977,7 @@ cargo build <span class="c-flag">--release</span>
   (function () {
     var vers = document.querySelectorAll('.relver');
     if (!vers.length || !window.fetch) return;
-    fetch('https://api.github.com/repos/LinuxJedi/Copperline/releases/latest')
+    fetch('https://api.github.com/repos/CopperlineHQ/Copperline/releases/latest')
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (rel) {
         if (!rel || !rel.tag_name) return;
