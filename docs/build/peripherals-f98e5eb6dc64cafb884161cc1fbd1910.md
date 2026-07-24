@@ -10,6 +10,52 @@ Z3 RAM options and user `[[zorro]]` metadata boards all build the same
 specs. The user-facing guide, including the metadata file format and the
 autoconfig walk-through, is [](../zorro).
 
+## Fat Gary and Ramsey (`gary.rs`, `ramsey.rs`)
+
+The A3000 and A4000 profiles fit the big-box motherboard pair: Fat Gary,
+the bus controller, and Ramsey, the memory controller. Both answer in the
+`$DE0000` page Gary decodes, with an address decode cruder than a register
+map suggests: only the byte lane and two address bits matter (lanes 0-2
+are Gary's, lane 3 is Ramsey's), and the whole layout repeats every `$100`
+to the end of the page, so every register is mirrored many times over --
+the Ramsey version register Kickstart reads at `$DE0043` answers equally
+at `$DE0047` or `$DE0143`. Diagnostic tools reading addresses that look
+like nothing in particular are reading a mirror.
+
+Gary's three registers are single read/write bits in bit 7: TIMEOUT
+(`$DE0000`, whether an unanswered bus cycle produces BERR or DSACK), TOENB
+(`$DE0001`, timeout enable), and COLDBOOT (`$DE0002`, the power-up flag
+the OS clears on warm reboot). None of them change emulated behaviour --
+bus timeouts are not modelled; an unanswered cycle floats -- but the
+read/write COLDBOOT bit is what identification tools use to detect a Fat
+Gary, and without one they never go looking for the Ramsey behind it.
+
+Ramsey drives the motherboard fast RAM (`[memory] motherboard`): a 32-bit
+local bank ending at `$08000000` and growing downward, so a full 16 MiB
+reaches `$07000000`. Its two byte-wide registers sit on lane 3: the
+control register at `$DE0003` (refresh rate, page/burst/skip modes, DRAM
+geometry) and the read-only version register at `$DE0043` -- `$0D` for
+the A3000's Ramsey-04, `$0F` for the A4000's Ramsey-07, a distinction
+that matters because the two parts disagree about control bit 4
+(Ramsey-04 DRAM width versus Ramsey-07 cycle-skip mode). Refresh and the
+speed modes have no observable effect in an emulator that never loses a
+DRAM cell, but the bits store and read back because Kickstart and the
+diagnostic tools write a mode and spin until they read it back, and the
+geometry bits are seeded to describe DRAM parts matching the fitted RAM
+size so sizing probes agree with the RAM that answers. Only the register
+file lives in `ramsey.rs`; the RAM bank itself is `memory::Memory::mb_ram`.
+
+Beyond Ramsey's four banks the big-box memory map reserves
+`$04000000`-`$06FFFFFF` for motherboard RAM expansion; on the A4000
+profile the bank keeps growing downward through it, up to 64 MiB at
+`$04000000`, still sized by Kickstart's top-down probe (the control
+register keeps describing the fully populated 1Mx4 geometry -- it has
+no way to say more). The complementary `[memory] accelerator` bank
+models CPU-slot local RAM: it starts at `$08000000` and grows upward
+through the coprocessor-slot space, up to 128 MiB at `$10000000` where
+Zorro III space begins, gated only on a 32-bit CPU
+(`memory::Memory::accel_ram`).
+
 ## Gayle IDE (`gayle.rs`)
 
 A600/A1200 machines get the Gayle gate array: the ID register at
@@ -139,12 +185,30 @@ from the `dirfs.rs` path above, which snapshots a directory into an
 in-memory FFS volume behind a virtual drive. The guest side is a tiny
 handler (see `guest/services/`) mapped into the Copperline services board
 with a mount table and a hand-built DiagArea; at expansion init it builds
-one DeviceNode per mount and `AddBootNode`s it, so DOS mounts the devices
-at boot. The handler forwards every DosPacket to the host through a
-reserved A-line trap, and all `ACTION_*` semantics -- reads, writes,
-create/rename/delete, directory walks, protection, comments, datestamps
--- are implemented host-side against the real filesystem, with results
-written straight into guest memory.
+one DeviceNode per mount and `AddBootNode`s it (at the mount's configured
+boot priority), so DOS mounts the devices at boot. The handler forwards
+every DosPacket to the host through a doorbell register in the board's
+MMIO window: writing the packet APTR to `REG_DOSPKT` services the packet
+synchronously inside the register write, so `dp_Res1`/`dp_Res2` and the
+result registers are filled before the next guest instruction runs. All
+`ACTION_*` semantics -- reads, writes, create/rename/delete, directory
+walks, protection, comments, datestamps -- are implemented host-side
+against the real filesystem, with results written straight into guest
+memory.
+
+Each mount unit owns its own bank of longword registers in the window
+(layout shared with the guest via `guest/services/copperline_board.h`):
+`REG_MSGPORT` publishes the handler process's MsgPort while the unit is
+live, and `REG_RESULT`/`REG_ARG` tell the handler what to do with the
+packet it just rang in (reply it, `AddDosEntry` a host-built volume
+DosList node, or exit on `ACTION_DIE`). One handler process runs per
+unit against its own bank, so mounts never synchronize with each other.
+A single global `DIAG_DOORBELL` strobe carries the expansion-init work,
+which runs before any handler process exists. That init strobe is also
+where `[machine] rom_scsi_device_disable` takes effect: the board's
+DiagPoint culls the ROM's `scsi.device` resident tag (`romtags.rs`),
+which is why setting the flag instantiates the services board even with
+no `[[filesys]]` mounts configured.
 
 Amiga attributes a host filesystem cannot hold live in UAE-style `.uaem`
 sidecar files (read when present, written back on change, hidden from
@@ -218,6 +282,21 @@ MODE1/2048, MODE1/2352, and AUDIO tracks) for both machines.
 An MSM6242-compatible register view at `$DC0000`, present on machines
 configured with `rtc = true`. Reads reflect host time; guest writes only
 affect the emulated latch/control state, never the host clock.
+
+The part is four bits wide and wired to the low byte lane alone, so it answers
+on odd addresses while the even lane floats with the bus -- with or without a
+chip in the socket, since nothing else drives it either. The register select is
+A2-A5, so A1 does not reach the decode and each register answers at both of its
+odd bytes (register 0 at `+1` and `+3`, register 1 at `+5` and `+7`, ...);
+AmigaOS uses `$DC0000 + N * 4 + 3` by convention, not because the part is deaf
+at `+1`. Writes take the same lanes as reads.
+With `rtc = false` the page still answers the cycle, and the odd lane reads
+back `$40` (measured on real A500 hardware) rather than floating. That
+distinction matters: every OS clock probe -- AROS `battclock.resource`,
+1.3's `SetClock`, 2.0+'s `battclock.resource` -- decides a clock is present
+by writing a control nibble and reading it back, so a lane floating to the
+last value on the data bus eventually echoes the write and hands the guest
+an imaginary clock, and then an imaginary date.
 
 ## Input (`gamepad.rs`, window input paths)
 
@@ -305,10 +384,13 @@ Paula's SERDAT transmit path lands on a `SerialSink`. The default
 `StdoutSink` prints to the host terminal -- this
 is how DiagROM's diagnostic stream and the `timing-test/` results are
 captured in terminals and CI logs. `TcpSerialSink` bridges the port to a
-listening TCP socket (`[serial] mode = "tcp"`, one client at a time) and
-`PtySerialSink` to a host pseudo-terminal pair (`mode = "pty"`, Unix
-only); both are bidirectional, so an `AUX:` shell on the Amiga side gives
-a remote AmigaDOS console.
+listening TCP socket (`[serial] mode = "tcp"`, one client at a time) or
+dials out to a remote endpoint (`mode = "tcp-connect"` with `connect =
+"host:port"` -- the BBS-client wiring), and `PtySerialSink` bridges to a
+host pseudo-terminal pair (`mode = "pty"`, Unix only); all are
+bidirectional, so an `AUX:` shell on the Amiga side gives a remote
+AmigaDOS console. The browser build swaps in a channel-backed sink that
+the page bridges to a WebSocket.
 
 A `SerialSink` that can *produce* input must override
 `has_pending_input` alongside `read_byte`/`read_word`:
@@ -369,3 +451,31 @@ serial, i.e. the fault is upstream of the bridge); `=2` decodes every
 message in each direction. `COPPERLINE_MIDI_IMMEDIATE=1` bypasses
 scheduling and sends each message for immediate delivery, to separate a
 timing problem from a connection one.
+
+## Parallel port peripherals (`parallel.rs`, `sampler.rs`)
+
+The Centronics port's peripheral boundary is the `ParallelPort` trait.
+CIA-A port B (`$BFE101`) carries the eight data pins and CIA-A's `PC`
+output is the active-low printer strobe: the bus forwards each strobe
+with the physical pin levels, and a peripheral that accepts the byte
+returns true, which the bus turns into the printer's active-low `/ACK`
+edge on CIA-A FLAG. An input peripheral instead drives the data pins
+itself on every CIA-A port-B read. The status lines BUSY, POUT, and SEL
+are CIA-B port A pins 0-2, peripheral-driven inputs with motherboard
+pull-ups. The default null peripheral is an unplugged cable: it neither
+acknowledges nor drives any pin, and the pulled-up status lines read all
+high.
+
+`[parallel] device = "printer"` captures strobed bytes to the configured
+output file (`FileParallelPort`), holding the status lines at
+ready-online levels (SEL high, BUSY and POUT low) -- without those,
+`parallel.device` polls BUSY forever and never sends a byte. `device =
+"sampler"` fits the classic mono 8-bit parallel-port digitizer
+(AMAS/DSS-class, modelled on the open-amiga-sampler schematics): a host
+capture stream fills a ring in real time and each port-B read returns
+the sample for the elapsed *emulated* time, so recordings line up
+however fast or slow the Amiga polls. Samples are 8-bit offset-binary
+(128 = silence), host left and right are summed to the mono input, and
+the preamp gain is clamped to +/-24 dB. `COPPERLINE_SAMPLER_DEBUG=1`
+logs the captured input level about once a second -- a CLI VU meter for
+checking the host microphone is feeding the port.

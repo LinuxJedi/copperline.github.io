@@ -43,6 +43,8 @@ range checks as the equivalent TOML fields:
 | `--chip SIZE` | `[memory] chip` | `512K`, `1M`, `2M`, ... |
 | `--fast SIZE` | `[memory] fast` | `0`, `1M`, `4M`, `8M`, ... |
 | `--slow SIZE` | `[memory] slow` | `0`, up to `512K` |
+| `--motherboard SIZE` | `[memory] motherboard` | Ramsey RAM (A3000/A4000): `0`, `1M`..`4M`, `8M`, `12M`, `16M`; A4000 up to `64M` |
+| `--accelerator SIZE` | `[memory] accelerator` | CPU-slot RAM at `$08000000` (32-bit CPUs): `0` to `128M` |
 | `--floppy-drives COUNT` | `[floppy] drives` | `1` to `4` wired drives (`DF0:` plus external drives) |
 | `--floppy-speed PERCENT` | `[floppy] speed` | `100` (real), `200`, `400`, `800`, or `0` (turbo) |
 | `--joystick MODE` | `[input] joystick` | `gamepad` (default), `keyboard` |
@@ -70,7 +72,7 @@ too -- `--audio-device`, `--audio-channel-mode`, `--audio-stereo-separation`,
 ## Top level
 
 ```toml
-rom = "KICK13.ROM"            # Kickstart image, exactly 512 KiB
+rom = "KICK13.ROM"            # Kickstart image, 512 KiB (or a 256 KiB 1.x part)
 extended_rom = "cd32ext.rom"  # optional: CDTV (256K at $F00000) or
                               # CD32 (512K at $E00000) extended ROM
 # identify = false            # drop the Copperline identification board
@@ -94,14 +96,26 @@ menu's **Load Kickstart ROM...** item, which hard-resets the machine. Machine
 profiles that need an extended ROM (CDTV, CD32) will tell you if it is
 missing.
 
+Both ROM keys accept images in either byte order. Alongside plain CPU-order
+dumps, the byte-swapped images prepared for EPROM programmers -- the
+single-chip `.bin` ROM files in Hyperion's Kickstart 3.1.4/3.2 releases, such
+as `kick.a500a600a2000.46.143.bin`, store every 16-bit word with its bytes
+exchanged -- are recognised from their header and restored on load, so either
+file boots identically. A 256 KiB Kickstart 1.x part is mirrored across the
+512 KiB ROM window, as it decodes on real hardware. The split `hi`/`lo` chip
+pairs for the 32-bit machines are not accepted; use the matching single-file
+image instead.
+
 ## `[machine]` -- machine profiles
 
 ```toml
 [machine]
 profile = "A1200" # A1000, A500, A500OCS, A500Plus (A500+), A600, A1200, A3000, A4000, CDTV, CD32
 rtc = true        # add a battery RTC (default: only A500+/CDTV/A3000/A4000 ship with one)
+# rtc_chip = "RP5C01"              # MSM6242 (default) or RP5C01 (A3000/A4000 default)
 # rtc_time = "2005-03-18 01:58:29" # seed the clock; it then ticks in emulated time
 # rtc_frozen = true                # stop the seeded clock at rtc_time exactly
+# battmem = "battmem.nvram"        # RP5C01 battery-RAM backing file (default when fitted)
 mem_controller = "ramsey-07" # none, ramsey-04 (A3000), ramsey-07 (A4000)
 rom_scsi_device_disable = true # skip the ROM's scsi.device (default: when its bus has no drives)
 ```
@@ -124,8 +138,8 @@ gives a plain 8371/8362 OCS machine.
 | `A500Plus` | ECS (8375 Agnus, ECS Denise) | 68000 @ 7.09 MHz | 1M | 0 | RTC |
 | `A600` | ECS (8375 Agnus, ECS Denise) | 68000 @ 7.09 MHz | 1M | 0 | Gayle IDE |
 | `A1200` | AGA (Alice/Lisa) | 68EC020 @ 14.18 MHz | 2M | 0 | Gayle IDE |
-| `A3000` | ECS | 68030 @ 25 MHz | 2M | 0 | Ramsey-04, RTC |
-| `A4000` | AGA (Alice/Lisa) | 68040 @ 25 MHz | 2M | 0 | Ramsey-07, RTC |
+| `A3000` | ECS | 68030 @ 25 MHz | 2M | 0 | Ramsey-04, RP5C01 RTC |
+| `A4000` | AGA (Alice/Lisa) | 68040 @ 25 MHz | 2M | 0 | Ramsey-07, RP5C01 RTC |
 | `CDTV` | ECS | 68000 @ 7.09 MHz | 1M | 0 | DMAC CD controller, RTC, 256K extended ROM |
 | `CD32` | AGA (Alice/Lisa) | 68EC020 @ 14.18 MHz | 2M | 0 | Akiko, CD32 pad, NVRAM, 512K extended ROM |
 
@@ -135,6 +149,33 @@ board), `CDTV`, `A3000`, and `A4000` fit one by default; the base
 A500/A500OCS, A600, A1200, A1000, and CD32 have none. Set `rtc = true` to add
 one -- for an A600HD or a clock-equipped A1200, say -- so the Workbench clock
 keeps time.
+
+`rtc_chip` names the part in that socket, because Commodore used two with
+different register protocols: the OKI **MSM6242** on the small boxes, the
+CDTV, and the aftermarket clock expansions, and the Ricoh **RP5C01** on the
+A3000/A4000 motherboards (the Ricoh also carries 26 nibbles of battery RAM,
+which AmigaOS uses via `battmem.resource` on those machines). The default
+follows the profile -- `RP5C01` on `A3000`/`A4000`, `MSM6242` everywhere else
+-- and setting the key implies `rtc = true`. AmigaOS probes for either part,
+so the choice is mostly invisible to it, but Linux/m68k does not probe: it
+drives the chip the machine model dictates, so an A3000/A4000 booting Linux
+needs the RP5C01 answering for its clock to work.
+
+`battmem` persists the RP5C01's battery-backed registers -- the 26 RAM
+nibbles behind `battmem.resource` plus the alarm and 12/24 settings --
+across runs, the way the real board's battery does. This is where
+`scsi.device` keeps its per-unit SCSI host settings (an A3000's or A4091's
+synchronous-transfer, disconnect, and last-drive options, including
+remembering attached CD-ROM drives), so without it those revert every run.
+The file uses the same `.nvram` layout as WinUAE and Amiberry, so backing
+files interchange between emulators; only the battery payload loads back --
+the time-of-save digits in the file never override the (host- or
+`rtc_time`-driven) clock. It defaults to `battmem.nvram` in the working
+directory whenever an RP5C01 is fitted; point it elsewhere with a path, or
+set `battmem = ""` to keep the battery registers session-only. Note that a
+persisted file carries guest-visible state from one run into the next by
+design, so delete it (or disable it) where byte-for-byte reproducible
+headless runs matter.
 
 `rtc_time` seeds the clock instead of letting it mirror the host's: the value
 is either an integer (Unix seconds, UTC) or a string
@@ -178,8 +219,11 @@ turns the driver back on automatically (it is the boot path for those
 drives), and setting the flag explicitly wins in either direction. The ROM
 file itself is never modified.
 
-Motherboard fast RAM is not emulated on either; use `[memory] z3` instead,
-which the OS is equally happy with.
+Both profiles fit their stock 4M of Ramsey-controlled motherboard fast RAM;
+`[memory] motherboard` resizes it up to 16M, and on the A4000 up to 64M
+via the motherboard RAM expansion space (see the `[memory]` section).
+`[memory] accelerator` adds CPU-slot RAM at `$08000000` on any 32-bit
+machine.
 
 `mem_controller` is normally left to the profile. It is broken out because
 Ramsey's registers collide with nothing else, so it can be fitted to
@@ -311,10 +355,12 @@ clock_mhz = 14.0    # optional; defaults to the model's stock speed
 
 ```toml
 [memory]
-chip = "512K"   # OCS max 512K; ECS/AGA max 2M
-fast = "0"      # Zorro II fast RAM at $200000: 64K..8M board sizes
-slow = "512K"   # A500 trapdoor RAM at $C00000: 0 or up to 512K
-z3   = "0"      # Zorro III RAM (needs a 32-bit CPU): 64K..1G, power of two
+chip = "512K"        # OCS max 512K; ECS/AGA max 2M
+fast = "0"           # Zorro II fast RAM at $200000: 64K..8M board sizes
+slow = "512K"        # A500 trapdoor RAM at $C00000: 0 or up to 512K
+motherboard = "0"    # Ramsey motherboard RAM (A3000/A4000): up to 16M (A4000: 64M)
+accelerator = "0"    # CPU-slot RAM at $08000000 (32-bit CPUs): up to 128M
+z3   = "0"           # Zorro III RAM (needs a 32-bit CPU): 64K..1G, power of two
 ```
 
 Sizes accept `K`/`KB`/`M`/`MB` (and `G`/`GB` for Zorro III) suffixes or
@@ -327,6 +373,22 @@ plain byte counts, and must be multiples of 4 KiB.
   4M, or 8M.
 - **Slow RAM** ($C00000 "ranger" RAM) is arbitrated on the chip bus through
   Agnus exactly like chip RAM -- it is slow in the authentic way.
+- **Motherboard RAM** is the 32-bit local memory Ramsey drives on the
+  A3000/A4000: it ends at `$08000000` and grows downward (16M reaches
+  `$07000000`), and Kickstart sizes it with its own probe -- no autoconfig
+  involved. It needs a Ramsey (`[machine] mem_controller`, fitted by the
+  A3000/A4000 profiles, which also fit their stock 4M of this RAM by
+  default) and a 32-bit CPU, and must fill whole Ramsey banks: 1M-4M in
+  1M steps, or 8M, 12M, 16M. On the A4000 (Ramsey-07), sizes beyond 16M
+  keep growing downward into the `$04000000`-`$06FFFFFF` motherboard RAM
+  expansion space, in 4M steps up to 64M (which reaches `$04000000`).
+  Set `motherboard = "0"` to remove it.
+- **Accelerator RAM** is CPU-slot local memory: it starts at `$08000000`
+  and grows upward through the coprocessor-slot expansion space, up to
+  128M (ending at `$10000000`, where Zorro III space begins). This is the
+  RAM an accelerator/CPU board carries, so it needs a 32-bit CPU but no
+  particular machine profile; any whole number of megabytes fits.
+  Kickstart sizes it with its own probe, like the motherboard bank.
 - **Z3 RAM** requires a 68020/68030/68040/68060 (a 24-bit bus cannot reach it);
   Kickstart assigns its base address, usually `$40000000`.
 
@@ -416,12 +478,18 @@ channel_mode = "stereo"     # "stereo" (default) or "mono"
 stereo_separation = 100     # 0-100; 100 = hardware panning, 0 = mono
 ```
 
-The drive sounds are generated from scratch: motor hum with spin-up/down,
-head-step clicks for seeks and the empty-drive poll, and faint read/write
-hiss during disk DMA. Only step pulses that actually fire the stepper are
-audible: like a real 3.5" mechanism, an outward pulse with the head at
-track 0 is gated by the /TRK0 sensor, so NoClick-style patches silence
-the empty-drive poll just as they do on real hardware.
+The drive sounds are generated from scratch: motor hum with spin-up/down
+over a rumble that repeats with each platter revolution, and head-step
+clacks (an isolated step -- the empty-drive poll, or the track-to-track
+advance while loading -- lands with its rebound clatter, and fast
+multi-track seeks blur into the characteristic buzz). Reading adds no
+noise of its own; the loading sound is the step rhythm over the spinning
+motor, as on the real mechanism. The synthesis targets were measured
+from recordings of real Amiga drive mechanisms, but no sample data is
+used. Only step pulses that actually fire the stepper are audible: like
+a real 3.5" mechanism, an outward pulse with the head at track 0 is
+gated by the /TRK0 sensor, so NoClick-style patches silence the
+empty-drive poll just as they do on real hardware.
 
 `output_device` picks the host output by a case-insensitive substring of the
 names `--list-audio-devices` prints (`--audio-device` overrides it); an omitted
@@ -552,8 +620,9 @@ With an `AUX:` shell on the Amiga side, `tcp`/`pty` give a remote AmigaDOS
 console. `--serial MODE` overrides the mode per run,
 `--serial-connect HOST:PORT` sets the dial-out target (and implies
 `mode = "tcp-connect"`), and `--midi-out NAME`/`--midi-in NAME` imply
-`mode = "midi"`. The launcher's **Serial** tab and the in-window
-**MIDI In / MIDI Out** menu items select the MIDI endpoints interactively.
+`mode = "midi"`. The launcher's **I/O Ports** tab (Serial section) and the
+in-window **MIDI In / MIDI Out** menu items select the MIDI endpoints
+interactively.
 
 The browser build has its own serial transport (the page bridges the port
 to a WebSocket); see [the browser chapter](browser.md).
@@ -877,8 +946,9 @@ net = "nat"   # or "loopback"; "none" for an isolated NIC
 ```
 
 Fits a Commodore A2065 Ethernet board (Am7990 LANCE) on the Zorro chain;
-`--a2065-net BACKEND` is the matching per-run flag. `net` selects the host
-network backend:
+`--a2065-net BACKEND` is the matching per-run flag, and the launcher's
+**I/O Ports** tab (Ethernet section) has the same picker. `net` selects the
+host network backend:
 
 - `"nat"` -- userspace NAT: the guest gets outbound IPv4 internet through a
   virtual gateway with no host privileges or setup, identically on Linux,
@@ -894,6 +964,29 @@ inherently non-deterministic: inbound frames arrive on the host's
 schedule, not the emulated clock, so a NIC board breaks byte-identical
 replay and save-state determinism while traffic flows. See [](../zorro)
 for the board details and the NAT's limitations.
+
+## `[rtg]` -- RTG graphics card
+
+```toml
+[rtg]
+card = "z3660"
+```
+
+`card` is `"z3660"` or `"none"`; a machine takes at most one. The Z3660 is a
+Zorro III board, so it comes fitted by default on machines whose CPU has a
+32-bit address bus (the A3000 and A4000) and is unavailable on the rest --
+asking for it there is an error, as it is for Zorro III RAM. It gives the
+guest high-resolution,
+high-colour screens through Picasso96. It needs the
+open-source Z3660.card driver installed in the guest (with its monitor in
+`DEVS:Monitors`); with that in place, Z3660 screen modes appear in
+ScreenMode, and the window shows the board's output when a screen is
+opened, switching back to the native Amiga display when it closes.
+
+The board's stock monitor ships with the `DISPLAYCHAIN=NO` tooltype, which
+models the real hardware's separate RTG monitor and never hands the display
+back to the native screen. On a single-window emulator you usually want
+`DISPLAYCHAIN=YES`, so the one window follows whichever screen is active.
 
 ## `[debug]` -- diagnostics
 

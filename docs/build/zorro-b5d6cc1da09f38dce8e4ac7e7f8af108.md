@@ -186,7 +186,9 @@ config:
 net = "nat"   # host network backend; "loopback", or "none" for isolation
 ```
 
-(`--a2065-net BACKEND` is the matching per-run flag.)
+(`--a2065-net BACKEND` is the matching per-run flag, and the launcher's
+**I/O Ports** tab has the same picker under its **Ethernet:** heading, with a
+warning shown when the non-deterministic NAT backend is selected.)
 
 Unlike the DMAC boards, the LANCE does not master the Amiga bus: its init
 block, descriptor rings, and packet buffers live in the board's own 32 KiB RAM
@@ -228,6 +230,27 @@ plugin) breaks Copperline's byte-identical replay and save-state reproducibility
 while traffic flows -- the emulator logs this when the board is attached. Save
 states record only the chosen backend and bring up a fresh one on load
 (in-flight frames are dropped; the guest's TCP retransmits).
+
+## Graphics: the Z3660 RTG board
+
+`[rtg] card = "z3660"` fits an in-tree RTG (retargetable graphics) board
+(`src/z3660.rs`) modelled on the Z3660 accelerator's FPGA graphics core,
+driven by the open-source Z3660.card Picasso96 driver in the guest (see
+[the configuration guide](guide/configuration) for setup). Although
+the physical board sits in the A3000/A4000 CPU slot, its RTG core
+autoconfigs as an ordinary Zorro III board -- manufacturer `0x144B`,
+product 1, the real board's identity rather than Copperline's own
+manufacturer ID below -- with one 128 MB window. The driver finds it with
+`FindConfigDev` and talks to a 32-bit register file in the first 2 KB of
+the window; the rest is board RAM, with P96 VRAM from window offset
+`+0x200000` and the GFXData blit-parameter mailbox the driver fills
+before ringing a blit at `+0x3200000`. Only the first 64 MB is backed --
+the driver never touches the window beyond ~52 MB, so the allocation
+stays honest without carrying all 128 MB.
+
+Like the A2065 it is a device-backed board, not a `[[zorro]]` metadata
+board; the scanout and blitter model live in `z3660.rs` and the
+presentation path is described in [](internals/video).
 
 ## How autoconfig works in Copperline
 
@@ -299,6 +322,7 @@ makes the real ROMulus flash-ROM board. The product numbers under it are:
 | 2 | Copperline identification board |
 | 3 | Built-in fast RAM (`[memory] fast`) |
 | 4 | Built-in Zorro III RAM (`[memory] z3`) |
+| 5 | Copperline services board (host `[[filesys]]` mounts; `filesys.rs`) |
 
 The **identification board** (`BoardSpec::copperline_id`) is always added to
 the chain (unless disabled, below) so guest software can detect that it is

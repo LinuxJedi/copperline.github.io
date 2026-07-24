@@ -73,7 +73,26 @@ super-hi-res playfield four, and the comparison narrows with the word
 cadence, so hi-res ignores nibble bit 3 and super-hi-res bits 2-3 (pinned
 by the `ddfprobe-hscroll` golden probe on the Kickstart 2.05 boot-screen
 constellation, vAmiga-verified). AGA's extended BPLCON1 fields feed the
-same per-plane delays through `aga_bplcon1_scroll_samples`.
+same per-plane delays through `aga_bplcon1_scroll_samples`, masked to one
+fetch-unit width (32-bit fetches scroll within 32 lo-res px, 64-bit within
+64).
+An off-grid DDFSTRT interacts with the scroll in both fetch regimes. An
+FMODE=0 fetch placed off the shifter reload grid rounds UP (the data is
+late for its own slot), and a scroll that covers the lateness catches the
+floor slot one gulp earlier (vAmiga-verified, `ddfprobe-phase`). A wide
+FMODE fetch has the opposite sense: Agnus masks DDFSTRT DOWN to the
+fetch-unit grid, the data arrives early, and Denise's reload comparator
+window is anchored at that early fetch start, so scroll taps folding into
+the last `earliness` px of the gulp window already see the next gulp's
+data and the playfield sits one full gulp left -- the display delay is
+`((tap + earliness) mod gulp) - earliness`. On-grid starts never fold.
+Pinned by the `ddfprobe-agafold` golden probe on the Alien Breed II AGA
+playfield constellation (lo-res BPL32, DDFSTRT $24 -> earliness 8 px),
+whose scroller pairs the folded taps with a one-gulp pointer step and
+jumps 32 px for 4 of every 16 pan frames without the fold. FS-UAE
+(WinUAE core) renders the probe's 16-band map identically, band by band
+(vAmiga is OCS/ECS-only and cannot arbitrate AGA); the hi-res/SHRES
+scaling of the fold is not yet externally verified.
 BPLCON1-delayed samples at the left edge of a scanline do not reuse the
 previous line's final bitplane word. Before the current line's shifter has a
 sample for a delayed tap, replay marks playfield output active but returns
@@ -199,7 +218,37 @@ acts as the hardware display-window flip-flop: it decides when the frame's
 chip-RAM snapshot and bitplane DMA capture begin, but changing DIWSTRT later
 in the field does not recenter the already-visible top border. Programmable
 VARBEAMEN scans instead use their programmed visible window as the render
-origin.
+origin. Under VARBEAMEN, Denise's horizontal counter restarts at 0 with the
+programmable line rather than free-running at the standard 15 kHz phase, so
+the DIW and sprite comparators sit later on the canvas by that origin
+difference (Linux/m68k amifb and the KS3.1 DblPAL screen both program their
+windows against the zero origin). A programmable frame is presented like a
+multisync monitor on both axes: when the mode programs its sync pulses, the
+glass shows the line from the HSYNC trailing edge to the next pulse
+(VARHSYEN) and the frame from the VSYNC trailing edge to the next pulse
+(VARVSYEN), so the picture sits where the mode's own porches place it, with
+blanked border rows above and below the programmed vertical window. Without
+a programmed horizontal sync the whole line maps onto the glass
+time-linearly (each colour clock covers 227/line_cck of a standard clock's
+width); without a programmed vertical sync the captured rows keep covering
+the full glass height.
+
+Super-hi-res output: Denise/Lisa resolve every 35 ns sample through the
+full palette pipeline (ECS Denise carries at most two bitplanes into
+SHRES; AGA Lisa runs the complete 8-bit index path, e.g. the 4-plane
+FMODE=3 Linux amifb console). A programmable scan that drives SHRES
+renders a double-width canvas at the 35 ns pixel pitch
+(`canvas_scale_for`): each of the two per-column samples is emitted as
+its own framebuffer pixel, and the presentation, screenshots, and the
+browser canvas carry the doubled width through (the desktop window shows
+it 1:1 on a 2x HiDPI texture). Every logical coordinate in the replay --
+comparators, fetch origins, sprite positions, the collision buffers --
+stays in the classic hi-res-pitch domain; only the framebuffer writes
+fan out, with non-SHRES pixels and sprites doubled. Standard 15 kHz
+scans keep the classic single-width canvas byte-identical; their SHRES
+screens still blend each 35 ns pair into the 70 ns pixel. Sprite
+positions remain at hi-res resolution on either canvas (true 35 ns
+sprite placement is a remaining TODO).
 
 Two vertical edge cases the replay honours:
 
@@ -299,7 +348,7 @@ either the render worker or the synchronous fallback.
 
 The frontend-independent half of this pass lives in
 `video/present_common.rs`: the post-render pipeline (vertical/horizontal
-recentring, the TV bezel mask, programmable-scan stretch) plus the
+recentring, the TV bezel mask, programmable-scan presentation) plus the
 standard-window and TV-aperture constants and the geometry predicates that
 key on them. `window/present.rs` re-exports everything there, so the
 desktop path is unchanged; headless consumers -- `cpu.rs`'s debug
@@ -345,6 +394,31 @@ framebuffer):
   picture (Virtual Dreams' "Absolute Inebriation") is still recentred, while a
   display that genuinely fetches bitplane data into the overscan border is left
   exactly as rendered.
+
+### RTG scanout (Z3660)
+
+When a fitted `[rtg]` board's guest driver switches the display to RTG,
+the presentation path swaps sources: the board's panned framebuffer
+(decoded from VRAM in the scanout's pixel format, with the board's
+hardware mouse sprite -- including wide and doubled sprites -- composited
+over it in `z3660.rs`) replaces the chipset render. The window presents
+that frame at its native resolution through a dedicated GPU texture
+rather than the 716-wide chipset buffer, and the TV aperture crop is
+suppressed -- it is a chipset crop rect, and applying it would show a
+sub-rect of the board's screen. While a menu or panel is open the window
+falls back to the CPU present path (at the cost of the downscale) so the
+overlay is not overdrawn by the GPU pass. If the board claims the display
+but its frame does not compose yet (mode set before the resolution
+registers), presentation falls back to the chipset render rather than
+freezing on a stale frame.
+
+`compose_rtg_present` (`present_common.rs`) also keeps an
+`FB_WIDTH`-stride copy of the native frame for the screenshot and CCP
+capture paths, which read the shared presentation buffer: one output row
+per board row at the board's native height, downsampled horizontally by
+sampling each output pixel's source-span centre so the rightmost source
+columns survive. Screenshots under RTG are therefore 716 wide at the
+board's native row count.
 
 `ui.rs` implements the status bar widgets, the pop-up menu, the smaller
 overlay panels (About, Shortcuts, Calibration), and the shared debugger/tool
